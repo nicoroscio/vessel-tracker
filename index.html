@@ -349,6 +349,72 @@
 
   .sync-btn:hover { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
 
+  /* ── API key modal ── */
+  #apikey-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 2000;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  #apikey-overlay.hidden { display: none; }
+
+  #apikey-modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 28px 24px;
+    width: 340px;
+    max-width: 90vw;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  }
+
+  #apikey-modal h2 {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  #apikey-modal p {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+
+  #apikey-modal p a { color: var(--accent); text-decoration: none; }
+
+  #apikey-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    outline: none;
+    margin-bottom: 12px;
+  }
+
+  #apikey-input:focus { border-color: var(--accent); }
+
+  #apikey-save {
+    width: 100%;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    cursor: pointer;
+  }
+
+  #apikey-save:hover { background: rgba(0,212,170,0.22); }
+
+  #apikey-error { font-size: 10px; color: var(--red); margin-bottom: 8px; display: none; }
+
   /* ── Mobile responsive ── */
   @media (max-width: 640px) {
     #sidebar-toggle { display: block; }
@@ -390,6 +456,17 @@
 </head>
 <body>
 
+<!-- API Key modal (shown on first use) -->
+<div id="apikey-overlay" class="hidden">
+  <div id="apikey-modal">
+    <h2>AISstream API Key</h2>
+    <p>Enter your free API key from <a href="https://aisstream.io" target="_blank">aisstream.io</a>.<br>It will be saved in your browser — one key per device.</p>
+    <input id="apikey-input" type="text" placeholder="Paste your API key here" />
+    <div id="apikey-error">Please enter a valid API key</div>
+    <button id="apikey-save" onclick="saveApiKey()">Connect</button>
+  </div>
+</div>
+
 <div id="app">
   <button id="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
   <div id="sidebar-backdrop" onclick="toggleSidebar()"></div>
@@ -418,8 +495,9 @@
     </div>
 
     <div id="sync-section">
-      <button class="sync-btn" onclick="exportVessels()">Export list</button>
-      <button class="sync-btn" onclick="importVessels()">Import list</button>
+      <button class="sync-btn" onclick="exportVessels()">Export</button>
+      <button class="sync-btn" onclick="importVessels()">Import</button>
+      <button class="sync-btn" onclick="showApiKeyModal()" title="Change API key">API key</button>
     </div>
   </div>
 
@@ -431,7 +509,7 @@
 //  CONFIG — edit this to manage your watchlist
 // ══════════════════════════════════════════════
 const CONFIG = {
-  apiKey: '46fdec09785a1276e1f766216edf4b11adcc08be',
+  apiKey: localStorage.getItem('rsc_api_key') || '',
   vessels: [
     { mmsi: '667001466', name: null },
     { mmsi: '215688000', name: null },
@@ -1089,6 +1167,34 @@ setInterval(() => {
 }, 10000);
 
 // ══════════════════════════════════════════════
+//  API KEY MANAGEMENT
+// ══════════════════════════════════════════════
+function saveApiKey() {
+  const input = document.getElementById('apikey-input');
+  const errDiv = document.getElementById('apikey-error');
+  const key = input.value.trim();
+
+  if (key.length < 10) {
+    errDiv.style.display = 'block';
+    return;
+  }
+
+  errDiv.style.display = 'none';
+  localStorage.setItem('rsc_api_key', key);
+  CONFIG.apiKey = key;
+  document.getElementById('apikey-overlay').classList.add('hidden');
+  connect();  // start the WebSocket with the new key
+}
+
+function showApiKeyModal() {
+  const overlay = document.getElementById('apikey-overlay');
+  const input = document.getElementById('apikey-input');
+  overlay.classList.remove('hidden');
+  input.value = CONFIG.apiKey;
+  input.focus();
+}
+
+// ══════════════════════════════════════════════
 //  BOOT
 // ══════════════════════════════════════════════
 initMap();
@@ -1107,12 +1213,22 @@ if (cached.length === 1) {
   state.map.fitBounds(bounds.pad(0.15), { animate: false });
 }
 
-connect();
+// If we have an API key, connect; otherwise show the setup modal
+if (CONFIG.apiKey) {
+  connect();
+} else {
+  showApiKeyModal();
+}
 _doSave();  // persist initial watchlist immediately
 
 // Enter key on MMSI input
 document.getElementById('mmsi-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') addVessel();
+});
+
+// Enter key on API key input
+document.getElementById('apikey-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveApiKey();
 });
 </script>
 </body>
