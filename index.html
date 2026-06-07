@@ -415,6 +415,67 @@
 
   #apikey-error { font-size: 10px; color: var(--red); margin-bottom: 8px; display: none; }
 
+  /* ── Sync (import/export) modal ── */
+  #sync-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 2000;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  #sync-overlay.hidden { display: none; }
+
+  #sync-modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 24px 20px;
+    width: 340px;
+    max-width: 90vw;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  }
+
+  #sync-modal h2 { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+
+  #sync-modal p { font-size: 11px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+
+  #sync-textarea {
+    width: 100%;
+    height: 120px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text);
+    outline: none;
+    resize: none;
+    margin-bottom: 10px;
+  }
+
+  #sync-textarea:focus { border-color: var(--accent); }
+
+  #sync-actions { display: flex; gap: 8px; }
+
+  #sync-actions button {
+    flex: 1;
+    padding: 8px;
+    border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid var(--border2);
+  }
+
+  #sync-cancel { background: var(--surface2); color: var(--muted); }
+  #sync-cancel:hover { background: var(--border2); color: var(--text); }
+
+  #sync-confirm { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+  #sync-confirm:hover { background: rgba(0,212,170,0.22); }
+
+  #sync-status { font-size: 10px; color: var(--accent); margin-bottom: 8px; min-height: 14px; }
+
   /* ── Mobile responsive ── */
   @media (max-width: 640px) {
     #sidebar-toggle { display: block; }
@@ -455,6 +516,20 @@
 </style>
 </head>
 <body>
+
+<!-- Sync (import/export) modal -->
+<div id="sync-overlay" class="hidden" onclick="if(event.target===this)closeSyncModal()">
+  <div id="sync-modal">
+    <h2 id="sync-title">Export</h2>
+    <p id="sync-desc">Copy the text below, then paste it on your other device using Import.</p>
+    <textarea id="sync-textarea" spellcheck="false"></textarea>
+    <div id="sync-status"></div>
+    <div id="sync-actions">
+      <button id="sync-cancel" onclick="closeSyncModal()">Cancel</button>
+      <button id="sync-confirm" onclick="syncConfirm()">Copy</button>
+    </div>
+  </div>
+</div>
 
 <!-- API Key modal (shown on first use) -->
 <div id="apikey-overlay" class="hidden">
@@ -1076,6 +1151,8 @@ function toggleSidebar() {
 // ══════════════════════════════════════════════
 //  EXPORT / IMPORT — sync vessel list across devices
 // ══════════════════════════════════════════════
+let _syncMode = null; // 'export' or 'import'
+
 function exportVessels() {
   const mmsis = Object.keys(state.vessels);
   if (mmsis.length === 0) { alert('No vessels to export.'); return; }
@@ -1084,72 +1161,108 @@ function exportVessels() {
   mmsis.forEach(mmsi => {
     const v = state.vessels[mmsi];
     data[mmsi] = {
-      mmsi: v.mmsi,
-      name: v.name,
+      mmsi: v.mmsi, name: v.name,
       lat: v.lat, lng: v.lng,
       sog: v.sog, cog: v.cog,
-      heading: v.heading,
-      navStatus: v.navStatus,
+      heading: v.heading, navStatus: v.navStatus,
       lastUpdate: v.lastUpdate,
     };
   });
 
-  const text = JSON.stringify(data, null, 2);
+  _syncMode = 'export';
+  document.getElementById('sync-title').textContent = 'Export vessels';
+  document.getElementById('sync-desc').textContent = 'Select all the text below, copy it, then paste it on your other device using Import.';
+  document.getElementById('sync-confirm').textContent = 'Copy all';
+  document.getElementById('sync-status').textContent = '';
+  const ta = document.getElementById('sync-textarea');
+  ta.value = JSON.stringify(data, null, 2);
+  ta.readOnly = true;
+  document.getElementById('sync-overlay').classList.remove('hidden');
 
-  // Try clipboard first (best UX on mobile), fall back to download
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => {
-      alert(`Copied ${mmsis.length} vessel(s) to clipboard.\n\nOn your other device, tap "Import list" and paste.`);
-    }).catch(() => downloadJSON(text));
-  } else {
-    downloadJSON(text);
-  }
-}
-
-function downloadJSON(text) {
-  const blob = new Blob([text], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'rsc-vessels.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
+  // Auto-select text for easy copying
+  setTimeout(() => { ta.focus(); ta.select(); }, 100);
 }
 
 function importVessels() {
-  const text = prompt('Paste your exported vessel list (JSON):');
-  if (!text || !text.trim()) return;
+  _syncMode = 'import';
+  document.getElementById('sync-title').textContent = 'Import vessels';
+  document.getElementById('sync-desc').textContent = 'Paste the exported vessel list below, then tap Import.';
+  document.getElementById('sync-confirm').textContent = 'Import';
+  document.getElementById('sync-status').textContent = '';
+  const ta = document.getElementById('sync-textarea');
+  ta.value = '';
+  ta.readOnly = false;
+  document.getElementById('sync-overlay').classList.remove('hidden');
+  setTimeout(() => ta.focus(), 100);
+}
 
-  try {
-    const data = JSON.parse(text.trim());
-    let added = 0;
-    Object.entries(data).forEach(([mmsi, saved]) => {
-      if (!/^\d{9}$/.test(mmsi)) return;
-      if (state.vessels[mmsi]) return; // skip duplicates
+function closeSyncModal() {
+  document.getElementById('sync-overlay').classList.add('hidden');
+  _syncMode = null;
+}
 
-      state.vessels[mmsi] = {
-        mmsi: saved.mmsi || mmsi,
-        name: saved.name || mmsi,
-        lat: saved.lat || null,
-        lng: saved.lng || null,
-        sog: saved.sog || null,
-        cog: saved.cog || null,
-        heading: saved.heading || null,
-        navStatus: saved.navStatus || null,
-        lastUpdate: saved.lastUpdate || null,
-        trail: [],
-        marker: null,
-        trailPolyline: null,
-        popup: null,
-      };
-      updateVesselOnMap(mmsi);
-      added++;
-    });
+function syncConfirm() {
+  const ta = document.getElementById('sync-textarea');
+  const statusEl = document.getElementById('sync-status');
 
-    renderSidebar();
-    _doSave();
-    alert(`Imported ${added} new vessel(s).`);
-  } catch (e) {
-    alert('Invalid JSON. Make sure you pasted the full exported text.');
+  if (_syncMode === 'export') {
+    // Select all + try clipboard copy
+    ta.focus();
+    ta.select();
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ta.value).then(() => {
+          statusEl.textContent = 'Copied to clipboard!';
+          setTimeout(closeSyncModal, 1200);
+        }).catch(() => {
+          // Clipboard API failed — fall back to execCommand
+          document.execCommand('copy');
+          statusEl.textContent = 'Copied! (If not, manually select all & copy)';
+        });
+      } else {
+        document.execCommand('copy');
+        statusEl.textContent = 'Copied! (If not, manually select all & copy)';
+      }
+    } catch (e) {
+      statusEl.textContent = 'Select all text above and copy manually.';
+    }
+    return;
+  }
+
+  if (_syncMode === 'import') {
+    const text = ta.value.trim();
+    if (!text) { statusEl.textContent = 'Paste your vessel list first.'; statusEl.style.color = 'var(--red)'; return; }
+
+    try {
+      const data = JSON.parse(text);
+      let added = 0;
+      Object.entries(data).forEach(([mmsi, saved]) => {
+        if (!/^\d{9}$/.test(mmsi)) return;
+        if (state.vessels[mmsi]) return;
+
+        state.vessels[mmsi] = {
+          mmsi: saved.mmsi || mmsi,
+          name: saved.name || mmsi,
+          lat: saved.lat || null, lng: saved.lng || null,
+          sog: saved.sog || null, cog: saved.cog || null,
+          heading: saved.heading || null,
+          navStatus: saved.navStatus || null,
+          lastUpdate: saved.lastUpdate || null,
+          trail: [], marker: null, trailPolyline: null, popup: null,
+        };
+        updateVesselOnMap(mmsi);
+        added++;
+      });
+
+      renderSidebar();
+      _doSave();
+      statusEl.style.color = 'var(--accent)';
+      statusEl.textContent = `Imported ${added} new vessel(s)!`;
+      setTimeout(closeSyncModal, 1500);
+    } catch (e) {
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = 'Invalid format. Make sure you pasted the full exported text.';
+    }
   }
 }
 
