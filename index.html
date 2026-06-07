@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>RSC Vessel Tracker</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0b0e13;
+    --surface: #111520;
+    --surface2: #181e2e;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #00d4aa;
+    --accent-dim: rgba(0,212,170,0.12);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.12);
+    --gray-dim: rgba(107,114,128,0.15);
+    --red: #ef4444;
+    --sidebar: 260px;
+  }
+
+  html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: 'IBM Plex Sans', sans-serif; color: var(--text); }
+
+  /* ── Layout ── */
+  #app { display: flex; height: 100vh; }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    width: var(--sidebar);
+    min-width: var(--sidebar);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+  }
+
+  #sidebar-header {
+    padding: 20px 18px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ── Connection status ── */
+  #conn-bar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 18px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  #conn-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.4s;
+  }
+
+  #conn-dot.connected { background: var(--accent); animation: pulse 2.5s ease-in-out infinite; }
+  #conn-dot.error { background: var(--red); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  #conn-label { color: var(--muted); }
+
+  /* ── Vessel list ── */
+  #vessel-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+
+  #vessel-list::-webkit-scrollbar { width: 3px; }
+  #vessel-list::-webkit-scrollbar-track { background: transparent; }
+  #vessel-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .vessel-card {
+    padding: 11px 18px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .vessel-card:hover { background: var(--surface2); }
+  .vessel-card.active { background: var(--surface2); border-left-color: var(--accent); }
+
+  .vessel-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+
+  .vstatus-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .vstatus-dot.moving { background: var(--accent); }
+  .vstatus-dot.anchored { background: var(--amber); }
+  .vstatus-dot.moored { background: var(--muted); }
+
+  .vname-block {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .vname {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .vmmsi {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .vdelete {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 20px;
+    text-align: center;
+    border-radius: 3px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+  }
+
+  .vessel-card:hover .vdelete { opacity: 1; }
+  .vdelete:hover { background: rgba(239,68,68,0.15); color: var(--red); }
+
+  .vmeta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    padding-left: 15px;
+    line-height: 1.6;
+  }
+
+  .vmeta span { color: var(--text); }
+
+  .vlastupdate {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    padding-left: 15px;
+    margin-top: 1px;
+  }
+
+  .no-data {
+    padding: 16px 18px;
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* ── Add vessel ── */
+  #add-section {
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  #add-row { display: flex; gap: 6px; }
+
+  #mmsi-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 6px 9px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  #mmsi-input::placeholder { color: var(--muted); }
+  #mmsi-input:focus { border-color: var(--accent); }
+
+  #add-btn {
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+
+  #add-btn:hover { background: rgba(0,212,170,0.22); }
+
+  #add-hint { font-size: 10px; color: var(--muted); margin-top: 5px; padding: 0 2px; }
+  #add-error { font-size: 10px; color: var(--red); margin-top: 4px; padding: 0 2px; display: none; }
+
+  /* ── Map ── */
+  #map { flex: 1; position: relative; }
+
+  /* ── Leaflet overrides ── */
+  .leaflet-container { background: #0d1520; font-family: 'IBM Plex Sans', sans-serif; }
+  .leaflet-control-zoom { border: 1px solid var(--border2) !important; background: var(--surface) !important; }
+  .leaflet-control-zoom a { background: var(--surface) !important; color: var(--text) !important; border-bottom: 1px solid var(--border2) !important; }
+  .leaflet-control-zoom a:hover { background: var(--surface2) !important; }
+  .leaflet-control-attribution { background: rgba(11,14,19,0.75) !important; color: var(--muted) !important; font-size: 9px !important; }
+  .leaflet-control-attribution a { color: var(--muted) !important; }
+
+  /* ── Custom popup ── */
+  .vessel-popup .leaflet-popup-content-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    padding: 0;
+  }
+
+  .vessel-popup .leaflet-popup-tip { background: var(--surface); }
+  .vessel-popup .leaflet-popup-content { margin: 0; width: auto !important; }
+
+  .popup-inner { padding: 12px 14px; min-width: 180px; }
+
+  .popup-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .popup-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 3px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+  }
+
+  .popup-key { color: var(--muted); }
+  .popup-val { color: var(--text); text-align: right; }
+
+  .popup-badge {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .badge-moving { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,212,170,0.3); }
+  .badge-anchored { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+  .badge-moored { background: var(--gray-dim); color: var(--muted); border: 1px solid var(--border2); }
+
+  /* ── Vessel SVG marker ── */
+  .vessel-icon { transition: opacity 0.3s; }
+
+  /* ── Mobile toggle button ── */
+  #sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1100;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 20px;
+    line-height: 40px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+
+  #sidebar-toggle:active { background: var(--surface2); }
+
+  /* ── Export/Import buttons ── */
+  #sync-section {
+    padding: 6px 14px 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 6px;
+  }
+
+  .sync-btn {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 5px 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .sync-btn:hover { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+
+  /* ── Mobile responsive ── */
+  @media (max-width: 640px) {
+    #sidebar-toggle { display: block; }
+
+    #app { flex-direction: column; }
+
+    #sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 280px;
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+    }
+
+    #sidebar.open {
+      transform: translateX(0);
+    }
+
+    #sidebar-header { padding-top: 10px; }
+
+    /* Backdrop when sidebar is open */
+    #sidebar-backdrop {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+
+    #sidebar-backdrop.visible { display: block; }
+
+    #map { width: 100%; height: 100vh; }
+
+    .leaflet-control-zoom { margin-top: 60px !important; }
+
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <button id="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+  <div id="sidebar-backdrop" onclick="toggleSidebar()"></div>
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <div class="brand">RSC Enterprises</div>
+      <div class="title">Vessel Tracker</div>
+      <div class="subtitle" id="vessel-count">0 vessels tracked</div>
+    </div>
+
+    <div id="conn-bar">
+      <div id="conn-dot"></div>
+      <span id="conn-label">Connecting…</span>
+      <span id="conn-count" style="margin-left:auto; color:var(--muted);"></span>
+    </div>
+
+    <div id="vessel-list"></div>
+
+    <div id="add-section">
+      <div id="add-row">
+        <input id="mmsi-input" type="text" placeholder="MMSI number" maxlength="9"/>
+        <button id="add-btn" onclick="addVessel()">+ Add</button>
+      </div>
+      <div id="add-hint">Enter 9-digit MMSI and press Add</div>
+      <div id="add-error"></div>
+    </div>
+
+    <div id="sync-section">
+      <button class="sync-btn" onclick="exportVessels()">Export list</button>
+      <button class="sync-btn" onclick="importVessels()">Import list</button>
+    </div>
+  </div>
+
+  <div id="map"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIG — edit this to manage your watchlist
+// ══════════════════════════════════════════════
+const CONFIG = {
+  apiKey: '46fdec09785a1276e1f766216edf4b11adcc08be',
+  vessels: [
+    { mmsi: '667001466', name: null },
+    { mmsi: '215688000', name: null },
+  ],
+  trailLength: 30,        // number of past positions to draw per vessel
+  reconnectDelay: 5000,   // ms before reconnect on drop
+};
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+const state = {
+  vessels: {},      // mmsi -> { name, lat, lng, sog, cog, heading, navStatus, lastUpdate, trail[], marker, trailPolyline }
+  ws: null,
+  map: null,
+  activeMMSI: null,
+  reconnectTimer: null,
+  msgCount: 0,      // total AIS messages received (for debug)
+  matchCount: 0,    // messages matching our watchlist
+};
+
+// Build initial vessel state from config
+// (loadState may override these with saved data later)
+CONFIG.vessels.forEach(v => {
+  state.vessels[v.mmsi] = {
+    mmsi: v.mmsi,
+    name: v.name || v.mmsi,
+    lat: null, lng: null,
+    sog: null, cog: null, heading: null,
+    navStatus: null,
+    lastUpdate: null,
+    trail: [],
+    marker: null,
+    trailPolyline: null,
+    popup: null,
+  };
+});
+
+// ══════════════════════════════════════════════
+//  HELPERS — robust metadata access
+// ══════════════════════════════════════════════
+// The API docs use "Metadata" but some responses may use "MetaData"
+function getMeta(msg) {
+  return msg.MetaData || msg.Metadata || {};
+}
+
+function getMMSI(msg) {
+  const meta = getMeta(msg);
+  // MMSI_String exists but is actually an integer — always convert to string
+  if (meta.MMSI_String != null) return String(meta.MMSI_String);
+  if (meta.MMSI != null) return String(meta.MMSI);
+  // Fallback: read UserID from the position report itself
+  const pr = msg.Message?.PositionReport;
+  if (pr?.UserID != null) return String(pr.UserID);
+  const sd = msg.Message?.ShipStaticData;
+  if (sd?.UserID != null) return String(sd.UserID);
+  return null;
+}
+
+// ══════════════════════════════════════════════
+//  MAP INIT
+// ══════════════════════════════════════════════
+function initMap() {
+  state.map = L.map('map', {
+    center: [43.8, 14.5],   // Adriatic default
+    zoom: 7,
+    zoomControl: true,
+  });
+
+  // OpenStreetMap base layer
+  const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 18,
+    opacity: 0.6,
+  });
+
+  // OpenSeaMap nautical overlay
+  const seaMap = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenSeaMap contributors',
+    maxZoom: 18,
+    opacity: 1,
+  });
+
+  // Dark base tile
+  const darkBase = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; CARTO',
+    maxZoom: 19,
+    opacity: 1,
+  });
+
+  darkBase.addTo(state.map);
+  seaMap.addTo(state.map);
+}
+
+// ══════════════════════════════════════════════
+//  VESSEL MARKER (SVG arrow)
+// ══════════════════════════════════════════════
+function makeVesselIcon(cog, isMoving, isActive) {
+  const heading = (cog != null && cog >= 0) ? cog : 0;
+  const color = isMoving ? '#00d4aa' : '#f59e0b';
+  const size = isActive ? 28 : 22;
+  const half = size / 2;
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <g transform="rotate(${heading}, ${half}, ${half})">
+      <polygon points="${half},2 ${size-4},${size-4} ${half},${size-6} 4,${size-4}"
+        fill="${color}" stroke="${isActive ? '#fff' : 'rgba(255,255,255,0.4)'}"
+        stroke-width="${isActive ? 1.5 : 0.8}" opacity="${isMoving ? 1 : 0.7}"/>
+    </g>
+    <circle cx="${half}" cy="${half}" r="2.5" fill="white" opacity="${isActive ? 1 : 0.6}"/>
+  </svg>`;
+
+  return L.divIcon({
+    html: svg,
+    className: 'vessel-icon',
+    iconSize: [size, size],
+    iconAnchor: [half, half],
+  });
+}
+
+// ══════════════════════════════════════════════
+//  UPDATE VESSEL ON MAP
+// ══════════════════════════════════════════════
+function updateVesselOnMap(mmsi) {
+  const v = state.vessels[mmsi];
+  if (!v || v.lat == null) return;
+
+  const isMoving = v.sog != null && v.sog > 0.5;
+  const isActive = state.activeMMSI === mmsi;
+  const icon = makeVesselIcon(v.cog, isMoving, isActive);
+  const latlng = [v.lat, v.lng];
+
+  if (!v.marker) {
+    v.marker = L.marker(latlng, { icon, zIndexOffset: isActive ? 1000 : 0 })
+      .addTo(state.map)
+      .on('click', () => selectVessel(mmsi));
+
+    v.popup = L.popup({ className: 'vessel-popup', closeButton: false, offset: [0, -8] });
+    v.marker.bindPopup(v.popup);
+  } else {
+    v.marker.setLatLng(latlng);
+    v.marker.setIcon(icon);
+    v.marker.setZIndexOffset(isActive ? 1000 : 0);
+  }
+
+  // Trail
+  if (v.trail.length > 1) {
+    const trailCoords = v.trail.map(p => [p.lat, p.lng]);
+    if (!v.trailPolyline) {
+      v.trailPolyline = L.polyline(trailCoords, {
+        color: isMoving ? '#00d4aa' : '#f59e0b',
+        weight: 1.5,
+        opacity: 0.4,
+        dashArray: '4 4',
+      }).addTo(state.map);
+    } else {
+      v.trailPolyline.setLatLngs(trailCoords);
+      v.trailPolyline.setStyle({ color: isMoving ? '#00d4aa' : '#f59e0b' });
+    }
+  }
+
+  if (isActive && v.marker.isPopupOpen()) {
+    v.popup.setContent(buildPopupHTML(v));
+  }
+}
+
+// ══════════════════════════════════════════════
+//  POPUP HTML
+// ══════════════════════════════════════════════
+function buildPopupHTML(v) {
+  const isMoving = v.sog != null && v.sog > 0.5;
+  const statusLabel = v.navStatus || (isMoving ? 'Under way' : 'Stopped');
+  const badgeClass = isMoving ? 'badge-moving' : (v.navStatus && v.navStatus.toLowerCase().includes('anchor') ? 'badge-anchored' : 'badge-moored');
+  const age = v.lastUpdate ? formatTimestamp(v.lastUpdate) : '---';
+  const cog = v.cog != null ? v.cog.toFixed(1) + '°' : '---';
+  const sog = v.sog != null ? v.sog.toFixed(1) + ' kn' : '---';
+  const lat = v.lat != null ? v.lat.toFixed(5) : '---';
+  const lng = v.lng != null ? v.lng.toFixed(5) : '---';
+
+  return `<div class="popup-inner">
+    <div class="popup-name">${v.name}</div>
+    <div class="popup-grid">
+      <span class="popup-key">MMSI</span><span class="popup-val">${v.mmsi}</span>
+      <span class="popup-key">Speed</span><span class="popup-val">${sog}</span>
+      <span class="popup-key">Course</span><span class="popup-val">${cog}</span>
+      <span class="popup-key">Lat / Lon</span><span class="popup-val">${lat}, ${lng}</span>
+      <span class="popup-key">Updated</span><span class="popup-val">${age}</span>
+    </div>
+    <span class="popup-badge ${badgeClass}">${statusLabel}</span>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  SIDEBAR RENDER
+// ══════════════════════════════════════════════
+function renderSidebar() {
+  const list = document.getElementById('vessel-list');
+  const mmsis = Object.keys(state.vessels);
+  document.getElementById('vessel-count').textContent = `${mmsis.length} vessel${mmsis.length !== 1 ? 's' : ''} tracked`;
+
+  list.innerHTML = '';
+  mmsis.forEach(mmsi => {
+    const v = state.vessels[mmsi];
+    const isMoving = v.sog != null && v.sog > 0.5;
+    const isActive = state.activeMMSI === mmsi;
+    const hasData = v.lat != null;
+
+    const dotClass = !hasData ? 'moored' : (isMoving ? 'moving' : (v.navStatus && v.navStatus.toLowerCase().includes('anchor') ? 'anchored' : 'moored'));
+    const sogText = v.sog != null ? v.sog.toFixed(1) + ' kn' : '---';
+    const cogText = v.cog != null ? cogToCompass(v.cog) : '---';
+    const lastSeen = v.lastUpdate ? `${formatTimestamp(v.lastUpdate)} (${timeAgo(v.lastUpdate)})` : 'waiting...';
+
+    const card = document.createElement('div');
+    card.className = 'vessel-card' + (isActive ? ' active' : '');
+    card.innerHTML = `
+      <div class="vessel-card-top">
+        <div class="vstatus-dot ${dotClass}"></div>
+        <div class="vname-block">
+          <div class="vname">${v.name}</div>
+          <div class="vmmsi">${v.mmsi}</div>
+        </div>
+        <button class="vdelete" title="Remove vessel">&times;</button>
+      </div>
+      <div class="vmeta">${hasData ? `<span>${sogText}</span> &middot; <span>${cogText}</span>` : 'No data yet'}</div>
+      <div class="vlastupdate">${lastSeen}</div>`;
+    card.onclick = () => selectVessel(mmsi);
+    card.querySelector('.vdelete').onclick = (e) => { e.stopPropagation(); removeVessel(mmsi); };
+    list.appendChild(card);
+  });
+}
+
+function cogToCompass(deg) {
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+
+function formatTimestamp(ts) {
+  const d = new Date(ts);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${dd}/${mm}/${yy} ${hh}:${min}:${ss}`;
+}
+
+function timeAgo(ts) {
+  const secs = Math.floor((Date.now() - ts) / 1000);
+  if (secs < 60) return 'just now';
+  if (secs < 3600) return `${Math.floor(secs / 60)}m ago`;
+  if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`;
+  return `${Math.floor(secs / 86400)}d ago`;
+}
+
+// ══════════════════════════════════════════════
+//  REMOVE VESSEL
+// ══════════════════════════════════════════════
+function removeVessel(mmsi) {
+  const v = state.vessels[mmsi];
+  if (!v) return;
+
+  // Clean up map objects
+  if (v.marker) state.map.removeLayer(v.marker);
+  if (v.trailPolyline) state.map.removeLayer(v.trailPolyline);
+
+  // Clear active selection if this vessel was selected
+  if (state.activeMMSI === mmsi) state.activeMMSI = null;
+
+  delete state.vessels[mmsi];
+  renderSidebar();
+  _doSave();   // immediate save on delete (bypass debounce)
+  // No reconnect needed — client-side filtering handles it.
+}
+
+// ══════════════════════════════════════════════
+//  SELECT VESSEL
+// ══════════════════════════════════════════════
+function selectVessel(mmsi) {
+  state.activeMMSI = mmsi;
+  const v = state.vessels[mmsi];
+
+  // Re-render all markers to update active state
+  Object.keys(state.vessels).forEach(m => updateVesselOnMap(m));
+  renderSidebar();
+
+  if (v.lat != null) {
+    state.map.setView([v.lat, v.lng], Math.max(state.map.getZoom(), 10), { animate: true });
+    v.popup.setContent(buildPopupHTML(v));
+    v.marker.openPopup();
+  }
+
+  // Close sidebar on mobile after selection
+  if (window.innerWidth <= 640) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('visible');
+    const toggle = document.getElementById('sidebar-toggle');
+    toggle.innerHTML = '&#9776;';
+    toggle.style.left = '12px';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  WEBSOCKET — AISstream
+// ══════════════════════════════════════════════
+function connect() {
+  // Clear any pending reconnect
+  if (state.reconnectTimer) {
+    clearTimeout(state.reconnectTimer);
+    state.reconnectTimer = null;
+  }
+
+  setConnStatus('connecting');
+
+  const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
+  state.ws = ws;
+
+  ws.onopen = () => {
+    console.log('[AIS] WebSocket open, sending subscription...');
+
+    // NOTE: FiltersShipMMSI is NOT used — the server-side MMSI filter
+    // is broken/unreliable on the free tier (returns 0 messages).
+    // Instead we subscribe to the full global stream and filter
+    // client-side in handleAISMessage via the state.vessels lookup.
+    const subscriptionMessage = {
+      APIKey: CONFIG.apiKey,
+      BoundingBoxes: [[[-90, -180], [90, 180]]],
+      FilterMessageTypes: ['PositionReport', 'ShipStaticData'],
+    };
+
+    console.log('[AIS] Subscription:', JSON.stringify(subscriptionMessage));
+    ws.send(JSON.stringify(subscriptionMessage));
+    setConnStatus('connected');
+  };
+
+  ws.onmessage = async (event) => {
+    try {
+      // AISstream sends binary frames → browser receives Blob, not string
+      const text = (event.data instanceof Blob) ? await event.data.text() : event.data;
+      const msg = JSON.parse(text);
+      state.msgCount++;
+      handleAISMessage(msg);
+      // Update visible counter every 50 messages (avoid DOM thrashing)
+      if (state.msgCount % 50 === 0 || state.matchCount > 0) {
+        const el = document.getElementById('conn-count');
+        if (el) el.textContent = `${state.msgCount} rx · ${state.matchCount} hit`;
+      }
+    } catch(e) {
+      console.warn('[AIS] Parse error:', e);
+    }
+  };
+
+  ws.onclose = (event) => {
+    console.log('[AIS] WebSocket closed. Code:', event.code, 'Reason:', event.reason);
+    setConnStatus('error');
+    state.reconnectTimer = setTimeout(connect, CONFIG.reconnectDelay);
+  };
+
+  ws.onerror = (event) => {
+    console.error('[AIS] WebSocket error:', event);
+  };
+}
+
+function handleAISMessage(msg) {
+  const mmsi = getMMSI(msg);
+  if (!mmsi || !state.vessels[mmsi]) {
+    // Not in our watchlist — skip (client-side filter)
+    return;
+  }
+  state.matchCount++;
+  console.log('[AIS] Match:', msg.MessageType, mmsi);
+
+  const v = state.vessels[mmsi];
+  const meta = getMeta(msg);
+  v.lastUpdate = Date.now();
+
+  // Update name from metadata if available
+  if (meta.ShipName) {
+    const shipName = meta.ShipName.trim();
+    if (shipName.length > 0 && !/^@+$/.test(shipName)) {
+      v.name = shipName;
+    }
+  }
+
+  if (msg.MessageType === 'PositionReport') {
+    const p = msg.Message?.PositionReport;
+    if (!p) return;
+
+    // Position: prefer PositionReport fields (like official example), fallback to metadata
+    v.lat = p.Latitude ?? meta.latitude;
+    v.lng = p.Longitude ?? meta.longitude;
+    v.sog = p.Sog ?? p.SpeedOverGround;
+    v.cog = p.Cog ?? p.CourseOverGround;
+    v.heading = (p.TrueHeading != null && p.TrueHeading !== 511) ? p.TrueHeading : v.cog;
+
+    const navCodes = {
+      0:'Under way (engine)', 1:'Anchored', 2:'Not under command',
+      3:'Restricted manoeuvre', 5:'Moored', 6:'Aground',
+      7:'Fishing', 8:'Under way (sail)', 15:'Unknown'
+    };
+    v.navStatus = navCodes[p.NavigationalStatus] || 'Unknown';
+
+    // Trail
+    if (v.lat != null && v.lng != null) {
+      v.trail.push({ lat: v.lat, lng: v.lng });
+      if (v.trail.length > CONFIG.trailLength) v.trail.shift();
+    }
+
+    updateVesselOnMap(mmsi);
+
+    // Update popup if open
+    if (v.marker && v.marker.isPopupOpen()) {
+      v.popup.setContent(buildPopupHTML(v));
+    }
+  }
+
+  if (msg.MessageType === 'ShipStaticData') {
+    const s = msg.Message?.ShipStaticData;
+    if (s) {
+      const name = s.Name?.trim();
+      if (name && name.length > 0 && !/^@+$/.test(name)) {
+        v.name = name;
+      }
+    }
+  }
+
+  renderSidebar();
+  saveState();
+}
+
+// ══════════════════════════════════════════════
+//  ADD VESSEL DYNAMICALLY
+// ══════════════════════════════════════════════
+function addVessel() {
+  const input = document.getElementById('mmsi-input');
+  const errDiv = document.getElementById('add-error');
+  const mmsi = input.value.trim().replace(/\s/g, '');
+
+  errDiv.style.display = 'none';
+
+  if (!/^\d{9}$/.test(mmsi)) {
+    errDiv.textContent = 'MMSI must be exactly 9 digits';
+    errDiv.style.display = 'block';
+    return;
+  }
+
+  if (state.vessels[mmsi]) {
+    errDiv.textContent = 'Already in watchlist';
+    errDiv.style.display = 'block';
+    return;
+  }
+
+  state.vessels[mmsi] = {
+    mmsi, name: mmsi,
+    lat: null, lng: null,
+    sog: null, cog: null, heading: null,
+    navStatus: null, lastUpdate: null,
+    trail: [], marker: null, trailPolyline: null, popup: null,
+  };
+
+  input.value = '';
+  renderSidebar();
+  _doSave();   // immediate save on add (bypass debounce)
+  // No reconnect needed — we filter client-side, so new MMSIs
+  // are picked up automatically from the global stream.
+}
+
+// ══════════════════════════════════════════════
+//  CONNECTION STATUS UI
+// ══════════════════════════════════════════════
+function setConnStatus(status) {
+  const dot = document.getElementById('conn-dot');
+  const label = document.getElementById('conn-label');
+  dot.className = '';
+  if (status === 'connected') {
+    dot.classList.add('connected');
+    label.textContent = 'Live · AISstream';
+    label.style.color = 'var(--accent)';
+  } else if (status === 'error') {
+    dot.classList.add('error');
+    label.textContent = 'Disconnected · retrying...';
+    label.style.color = 'var(--red)';
+  } else {
+    label.textContent = 'Connecting...';
+    label.style.color = 'var(--muted)';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  LOCALSTORAGE — persist vessels & positions
+// ══════════════════════════════════════════════
+const STORAGE_KEY = 'rsc_vessel_tracker';
+let _saveTimer = null;
+
+function saveState() {
+  // Debounce: batch rapid updates into one write every 2s
+  if (_saveTimer) return;
+  _saveTimer = setTimeout(() => { _saveTimer = null; _doSave(); }, 2000);
+}
+
+function _doSave() {
+  try {
+    const data = {};
+    Object.entries(state.vessels).forEach(([mmsi, v]) => {
+      data[mmsi] = {
+        mmsi: v.mmsi,
+        name: v.name,
+        lat: v.lat,
+        lng: v.lng,
+        sog: v.sog,
+        cog: v.cog,
+        heading: v.heading,
+        navStatus: v.navStatus,
+        lastUpdate: v.lastUpdate,
+        trail: v.trail.slice(-CONFIG.trailLength),  // keep trails bounded
+      };
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.warn('[Storage] Save failed:', e);
+  }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    Object.entries(data).forEach(([mmsi, saved]) => {
+      state.vessels[mmsi] = {
+        mmsi: saved.mmsi,
+        name: saved.name || mmsi,
+        lat: saved.lat,
+        lng: saved.lng,
+        sog: saved.sog,
+        cog: saved.cog,
+        heading: saved.heading,
+        navStatus: saved.navStatus,
+        lastUpdate: saved.lastUpdate,
+        trail: saved.trail || [],
+        marker: null,
+        trailPolyline: null,
+        popup: null,
+      };
+    });
+  } catch (e) {
+    console.warn('[Storage] Load failed:', e);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  MOBILE SIDEBAR TOGGLE
+// ══════════════════════════════════════════════
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const toggle = document.getElementById('sidebar-toggle');
+  const isOpen = sidebar.classList.toggle('open');
+  backdrop.classList.toggle('visible');
+  toggle.innerHTML = isOpen ? '&times;' : '&#9776;';
+  toggle.style.left = isOpen ? '244px' : '12px';
+}
+
+// ══════════════════════════════════════════════
+//  EXPORT / IMPORT — sync vessel list across devices
+// ══════════════════════════════════════════════
+function exportVessels() {
+  const mmsis = Object.keys(state.vessels);
+  if (mmsis.length === 0) { alert('No vessels to export.'); return; }
+
+  const data = {};
+  mmsis.forEach(mmsi => {
+    const v = state.vessels[mmsi];
+    data[mmsi] = {
+      mmsi: v.mmsi,
+      name: v.name,
+      lat: v.lat, lng: v.lng,
+      sog: v.sog, cog: v.cog,
+      heading: v.heading,
+      navStatus: v.navStatus,
+      lastUpdate: v.lastUpdate,
+    };
+  });
+
+  const text = JSON.stringify(data, null, 2);
+
+  // Try clipboard first (best UX on mobile), fall back to download
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert(`Copied ${mmsis.length} vessel(s) to clipboard.\n\nOn your other device, tap "Import list" and paste.`);
+    }).catch(() => downloadJSON(text));
+  } else {
+    downloadJSON(text);
+  }
+}
+
+function downloadJSON(text) {
+  const blob = new Blob([text], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'rsc-vessels.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importVessels() {
+  const text = prompt('Paste your exported vessel list (JSON):');
+  if (!text || !text.trim()) return;
+
+  try {
+    const data = JSON.parse(text.trim());
+    let added = 0;
+    Object.entries(data).forEach(([mmsi, saved]) => {
+      if (!/^\d{9}$/.test(mmsi)) return;
+      if (state.vessels[mmsi]) return; // skip duplicates
+
+      state.vessels[mmsi] = {
+        mmsi: saved.mmsi || mmsi,
+        name: saved.name || mmsi,
+        lat: saved.lat || null,
+        lng: saved.lng || null,
+        sog: saved.sog || null,
+        cog: saved.cog || null,
+        heading: saved.heading || null,
+        navStatus: saved.navStatus || null,
+        lastUpdate: saved.lastUpdate || null,
+        trail: [],
+        marker: null,
+        trailPolyline: null,
+        popup: null,
+      };
+      updateVesselOnMap(mmsi);
+      added++;
+    });
+
+    renderSidebar();
+    _doSave();
+    alert(`Imported ${added} new vessel(s).`);
+  } catch (e) {
+    alert('Invalid JSON. Make sure you pasted the full exported text.');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  STALENESS TICKER
+// ══════════════════════════════════════════════
+setInterval(() => {
+  renderSidebar();
+  // Refresh open popup timestamps
+  Object.values(state.vessels).forEach(v => {
+    if (v.marker && v.marker.isPopupOpen()) {
+      v.popup.setContent(buildPopupHTML(v));
+    }
+  });
+}, 10000);
+
+// ══════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════
+initMap();
+loadState();       // restore saved vessels & last-known positions
+renderSidebar();
+
+// Place cached vessels on the map immediately
+Object.keys(state.vessels).forEach(mmsi => updateVesselOnMap(mmsi));
+
+// Fit map to show all cached vessels (if any have positions)
+const cached = Object.values(state.vessels).filter(v => v.lat != null);
+if (cached.length === 1) {
+  state.map.setView([cached[0].lat, cached[0].lng], 10, { animate: false });
+} else if (cached.length > 1) {
+  const bounds = L.latLngBounds(cached.map(v => [v.lat, v.lng]));
+  state.map.fitBounds(bounds.pad(0.15), { animate: false });
+}
+
+connect();
+_doSave();  // persist initial watchlist immediately
+
+// Enter key on MMSI input
+document.getElementById('mmsi-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addVessel();
+});
+</script>
+</body>
+</html>
