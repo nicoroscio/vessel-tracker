@@ -668,9 +668,9 @@ function initMap() {
     opacity: 1,
   });
 
-  // Dark base tile
-  const darkBase = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; CARTO',
+  // Dark base tile (with city/place labels)
+  const darkBase = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; CARTO &copy; OpenStreetMap contributors',
     maxZoom: 19,
     opacity: 1,
   });
