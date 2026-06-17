@@ -874,7 +874,10 @@ function selectVessel(mmsi) {
   if (v.lat != null) {
     state.map.setView([v.lat, v.lng], Math.max(state.map.getZoom(), 10), { animate: true });
     v.popup.setContent(buildPopupHTML(v));
-    v.marker.openPopup();
+    // Defer openPopup so it runs after Leaflet finishes processing
+    // the icon updates from updateVesselOnMap (setIcon recreates
+    // the marker DOM, which closes any popup opened synchronously).
+    setTimeout(() => v.marker.openPopup(), 10);
   }
 
   // Close sidebar on mobile after selection
