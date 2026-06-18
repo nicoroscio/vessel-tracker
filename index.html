@@ -585,10 +585,7 @@
 // ══════════════════════════════════════════════
 const CONFIG = {
   apiKey: localStorage.getItem('rsc_api_key') || '',
-  vessels: [
-    { mmsi: '667001466', name: null },
-    { mmsi: '215688000', name: null },
-  ],
+  vessels: [],
   trailLength: 30,        // number of past positions to draw per vessel
   reconnectDelay: 5000,   // ms before reconnect on drop
 };
