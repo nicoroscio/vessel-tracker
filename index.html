@@ -779,7 +779,11 @@ function buildPopupHTML(v) {
 // ══════════════════════════════════════════════
 function renderSidebar() {
   const list = document.getElementById('vessel-list');
-  const mmsis = Object.keys(state.vessels);
+  const mmsis = Object.keys(state.vessels).sort((a, b) => {
+    const aHas = state.vessels[a].lat != null ? 0 : 1;
+    const bHas = state.vessels[b].lat != null ? 0 : 1;
+    return aHas - bHas;
+  });
   document.getElementById('vessel-count').textContent = `${mmsis.length} vessel${mmsis.length !== 1 ? 's' : ''} tracked`;
 
   list.innerHTML = '';
