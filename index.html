@@ -921,6 +921,7 @@ function connect() {
 
     console.log('[AIS] Subscription:', JSON.stringify(subscriptionMessage));
     ws.send(JSON.stringify(subscriptionMessage));
+    state._wsEverConnected = true;
     setConnStatus('connected');
   };
 
@@ -943,7 +944,11 @@ function connect() {
 
   ws.onclose = (event) => {
     console.log('[AIS] WebSocket closed. Code:', event.code, 'Reason:', event.reason);
-    setConnStatus('error');
+    if (!state._wsEverConnected) {
+      setConnStatus('unavailable');
+    } else {
+      setConnStatus('error');
+    }
     state.reconnectTimer = setTimeout(connect, CONFIG.reconnectDelay);
   };
 
@@ -1067,6 +1072,10 @@ function setConnStatus(status) {
     dot.classList.add('connected');
     label.textContent = 'Live · AISstream';
     label.style.color = 'var(--accent)';
+  } else if (status === 'unavailable') {
+    dot.classList.add('error');
+    label.textContent = 'AISstream down · retrying...';
+    label.style.color = 'var(--amber)';
   } else if (status === 'error') {
     dot.classList.add('error');
     label.textContent = 'Disconnected · retrying...';
