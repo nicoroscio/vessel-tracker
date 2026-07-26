@@ -154,6 +154,12 @@
     margin-top: 1px;
   }
 
+  .vtype {
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
   .vdelete {
     flex-shrink: 0;
     width: 20px;
@@ -263,12 +269,18 @@
   .vessel-popup .leaflet-popup-tip { background: var(--surface); }
   .vessel-popup .leaflet-popup-content { margin: 0; width: auto !important; }
 
-  .popup-inner { padding: 12px 14px; min-width: 180px; }
+  .popup-inner { padding: 12px 14px; min-width: 200px; }
 
   .popup-name {
     font-size: 13px;
     font-weight: 500;
     color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .popup-subtitle {
+    font-size: 10px;
+    color: var(--muted);
     margin-bottom: 8px;
     padding-bottom: 7px;
     border-bottom: 1px solid var(--border);
@@ -284,6 +296,12 @@
 
   .popup-key { color: var(--muted); }
   .popup-val { color: var(--text); text-align: right; }
+
+  .popup-section {
+    margin-top: 8px;
+    padding-top: 7px;
+    border-top: 1px solid var(--border);
+  }
 
   .popup-badge {
     display: inline-block;
@@ -325,7 +343,7 @@
 
   #sidebar-toggle:active { background: var(--surface2); }
 
-  /* ── Export/Import buttons ── */
+  /* ── Export/Import/Settings buttons ── */
   #sync-section {
     padding: 6px 14px 10px;
     border-top: 1px solid var(--border);
@@ -349,42 +367,30 @@
 
   .sync-btn:hover { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
 
-  /* ── API key modal ── */
-  #apikey-overlay {
+  /* ── Modal overlay (shared) ── */
+  .modal-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.7);
     z-index: 2000;
     display: flex; align-items: center; justify-content: center;
   }
 
-  #apikey-overlay.hidden { display: none; }
+  .modal-overlay.hidden { display: none; }
 
-  #apikey-modal {
+  .modal-box {
     background: var(--surface);
     border: 1px solid var(--border2);
     border-radius: 10px;
-    padding: 28px 24px;
+    padding: 24px 20px;
     width: 340px;
     max-width: 90vw;
     box-shadow: 0 16px 48px rgba(0,0,0,0.6);
   }
 
-  #apikey-modal h2 {
-    font-size: 15px;
-    font-weight: 500;
-    margin-bottom: 6px;
-  }
+  .modal-box h2 { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+  .modal-box p { font-size: 11px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
 
-  #apikey-modal p {
-    font-size: 11px;
-    color: var(--muted);
-    margin-bottom: 14px;
-    line-height: 1.5;
-  }
-
-  #apikey-modal p a { color: var(--accent); text-decoration: none; }
-
-  #apikey-input {
+  .modal-input {
     width: 100%;
     background: var(--surface2);
     border: 1px solid var(--border2);
@@ -397,9 +403,9 @@
     margin-bottom: 12px;
   }
 
-  #apikey-input:focus { border-color: var(--accent); }
+  .modal-input:focus { border-color: var(--accent); }
 
-  #apikey-save {
+  .modal-btn-primary {
     width: 100%;
     background: var(--accent-dim);
     border: 1px solid var(--accent);
@@ -411,34 +417,11 @@
     cursor: pointer;
   }
 
-  #apikey-save:hover { background: rgba(0,212,170,0.22); }
+  .modal-btn-primary:hover { background: rgba(0,212,170,0.22); }
 
-  #apikey-error { font-size: 10px; color: var(--red); margin-bottom: 8px; display: none; }
+  .modal-error { font-size: 10px; color: var(--red); margin-bottom: 8px; display: none; }
 
   /* ── Sync (import/export) modal ── */
-  #sync-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 2000;
-    display: flex; align-items: center; justify-content: center;
-  }
-
-  #sync-overlay.hidden { display: none; }
-
-  #sync-modal {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 10px;
-    padding: 24px 20px;
-    width: 340px;
-    max-width: 90vw;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
-  }
-
-  #sync-modal h2 { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
-
-  #sync-modal p { font-size: 11px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
-
   #sync-textarea {
     width: 100%;
     height: 120px;
@@ -518,8 +501,8 @@
 <body>
 
 <!-- Sync (import/export) modal -->
-<div id="sync-overlay" class="hidden" onclick="if(event.target===this)closeSyncModal()">
-  <div id="sync-modal">
+<div id="sync-overlay" class="modal-overlay hidden" onclick="if(event.target===this)closeSyncModal()">
+  <div class="modal-box">
     <h2 id="sync-title">Export</h2>
     <p id="sync-desc">Copy the text below, then paste it on your other device using Import.</p>
     <textarea id="sync-textarea" spellcheck="false"></textarea>
@@ -531,14 +514,14 @@
   </div>
 </div>
 
-<!-- API Key modal (shown on first use) -->
-<div id="apikey-overlay" class="hidden">
-  <div id="apikey-modal">
-    <h2>AISstream API Key</h2>
-    <p>Enter your free API key from <a href="https://aisstream.io" target="_blank">aisstream.io</a>.<br>It will be saved in your browser — one key per device.</p>
-    <input id="apikey-input" type="text" placeholder="Paste your API key here" />
-    <div id="apikey-error">Please enter a valid API key</div>
-    <button id="apikey-save" onclick="saveApiKey()">Connect</button>
+<!-- Backend URL modal (shown on first use) -->
+<div id="backend-overlay" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h2>Backend Server</h2>
+    <p>Enter the URL of your vessel tracker backend (Raspberry Pi API).</p>
+    <input id="backend-input" class="modal-input" type="text" placeholder="https://your-tunnel.example.com" />
+    <div id="backend-error" class="modal-error">Please enter a valid URL</div>
+    <button class="modal-btn-primary" onclick="saveBackendUrl()">Connect</button>
   </div>
 </div>
 
@@ -554,8 +537,7 @@
 
     <div id="conn-bar">
       <div id="conn-dot"></div>
-      <span id="conn-label">Connecting…</span>
-      <span id="conn-count" style="margin-left:auto; color:var(--muted);"></span>
+      <span id="conn-label">Connecting...</span>
     </div>
 
     <div id="vessel-list"></div>
@@ -572,7 +554,7 @@
     <div id="sync-section">
       <button class="sync-btn" onclick="exportVessels()">Export</button>
       <button class="sync-btn" onclick="importVessels()">Import</button>
-      <button class="sync-btn" onclick="showApiKeyModal()" title="Change API key">API key</button>
+      <button class="sync-btn" onclick="showBackendModal()">Settings</button>
     </div>
   </div>
 
@@ -581,94 +563,44 @@
 
 <script>
 // ══════════════════════════════════════════════
-//  CONFIG — edit this to manage your watchlist
+//  CONFIG
 // ══════════════════════════════════════════════
 const CONFIG = {
-  apiKey: localStorage.getItem('rsc_api_key') || '',
-  vessels: [],
-  trailLength: 30,        // number of past positions to draw per vessel
-  reconnectDelay: 5000,   // ms before reconnect on drop
+  backendUrl: localStorage.getItem('rsc_backend_url') || '',
+  pollInterval: 15000,
+  trailLength: 200,
 };
 
 // ══════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════
 const state = {
-  vessels: {},      // mmsi -> { name, lat, lng, sog, cog, heading, navStatus, lastUpdate, trail[], marker, trailPolyline }
-  ws: null,
+  vessels: {},
   map: null,
   activeMMSI: null,
-  reconnectTimer: null,
-  msgCount: 0,      // total AIS messages received (for debug)
-  matchCount: 0,    // messages matching our watchlist
+  pollTimer: null,
+  lastPollOk: false,
 };
-
-// Build initial vessel state from config
-// (loadState may override these with saved data later)
-CONFIG.vessels.forEach(v => {
-  state.vessels[v.mmsi] = {
-    mmsi: v.mmsi,
-    name: v.name || v.mmsi,
-    lat: null, lng: null,
-    sog: null, cog: null, heading: null,
-    navStatus: null,
-    lastUpdate: null,
-    trail: [],
-    marker: null,
-    trailPolyline: null,
-    popup: null,
-  };
-});
-
-// ══════════════════════════════════════════════
-//  HELPERS — robust metadata access
-// ══════════════════════════════════════════════
-// The API docs use "Metadata" but some responses may use "MetaData"
-function getMeta(msg) {
-  return msg.MetaData || msg.Metadata || {};
-}
-
-function getMMSI(msg) {
-  const meta = getMeta(msg);
-  // MMSI_String exists but is actually an integer — always convert to string
-  if (meta.MMSI_String != null) return String(meta.MMSI_String);
-  if (meta.MMSI != null) return String(meta.MMSI);
-  // Fallback: read UserID from the position report itself
-  const pr = msg.Message?.PositionReport;
-  if (pr?.UserID != null) return String(pr.UserID);
-  const sd = msg.Message?.ShipStaticData;
-  if (sd?.UserID != null) return String(sd.UserID);
-  return null;
-}
 
 // ══════════════════════════════════════════════
 //  MAP INIT
 // ══════════════════════════════════════════════
 function initMap() {
   state.map = L.map('map', {
-    center: [43.8, 14.5],   // Adriatic default
+    center: [43.8, 14.5],
     zoom: 7,
     zoomControl: true,
   });
 
-  // OpenStreetMap base layer
-  const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    maxZoom: 18,
-    opacity: 0.6,
-  });
-
-  // OpenSeaMap nautical overlay
-  const seaMap = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenSeaMap contributors',
-    maxZoom: 18,
-    opacity: 1,
-  });
-
-  // Dark base tile (with city/place labels)
   const darkBase = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; CARTO &copy; OpenStreetMap contributors',
     maxZoom: 19,
+    opacity: 1,
+  });
+
+  const seaMap = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenSeaMap contributors',
+    maxZoom: 18,
     opacity: 1,
   });
 
@@ -727,8 +659,7 @@ function updateVesselOnMap(mmsi) {
     v.marker.setZIndexOffset(isActive ? 1000 : 0);
   }
 
-  // Trail
-  if (v.trail.length > 1) {
+  if (v.trail && v.trail.length > 1) {
     const trailCoords = v.trail.map(p => [p.lat, p.lng]);
     if (!v.trailPolyline) {
       v.trailPolyline = L.polyline(trailCoords, {
@@ -749,27 +680,40 @@ function updateVesselOnMap(mmsi) {
 }
 
 // ══════════════════════════════════════════════
-//  POPUP HTML
+//  POPUP HTML (rich vessel data)
 // ══════════════════════════════════════════════
 function buildPopupHTML(v) {
   const isMoving = v.sog != null && v.sog > 0.5;
-  const statusLabel = v.navStatus || (isMoving ? 'Under way' : 'Stopped');
-  const badgeClass = isMoving ? 'badge-moving' : (v.navStatus && v.navStatus.toLowerCase().includes('anchor') ? 'badge-anchored' : 'badge-moored');
-  const age = v.lastUpdate ? formatTimestamp(v.lastUpdate) : '---';
-  const cog = v.cog != null ? v.cog.toFixed(1) + '°' : '---';
-  const sog = v.sog != null ? v.sog.toFixed(1) + ' kn' : '---';
-  const lat = v.lat != null ? v.lat.toFixed(5) : '---';
-  const lng = v.lng != null ? v.lng.toFixed(5) : '---';
+  const statusLabel = v.nav_status || (isMoving ? 'Under way' : 'Stopped');
+  const badgeClass = isMoving ? 'badge-moving' : (statusLabel.toLowerCase().includes('anchor') ? 'badge-anchored' : 'badge-moored');
+  const age = v.last_position_update ? formatTimestamp(v.last_position_update) : '---';
+
+  const subtitle = [v.flag, v.ship_type_name].filter(Boolean).join(' · ');
+
+  let rows = '';
+  function row(key, val) { if (val) rows += `<span class="popup-key">${key}</span><span class="popup-val">${val}</span>`; }
+
+  row('MMSI', v.mmsi);
+  if (v.imo) row('IMO', v.imo);
+  if (v.callsign) row('Callsign', v.callsign);
+  row('Speed', v.sog != null ? v.sog.toFixed(1) + ' kn' : '---');
+  row('Course', v.cog != null ? v.cog.toFixed(1) + '°' : '---');
+  row('Lat / Lon', (v.lat != null ? v.lat.toFixed(5) : '---') + ', ' + (v.lng != null ? v.lng.toFixed(5) : '---'));
+
+  let voyageRows = '';
+  function vrow(key, val) { if (val) voyageRows += `<span class="popup-key">${key}</span><span class="popup-val">${val}</span>`; }
+
+  if (v.destination) vrow('Dest', v.destination);
+  if (v.eta) vrow('ETA', v.eta.replace('T', ' '));
+  if (v.length && v.width) vrow('Size', v.length + ' × ' + v.width + ' m');
+  if (v.draught) vrow('Draught', v.draught.toFixed(1) + ' m');
+  vrow('Updated', age);
 
   return `<div class="popup-inner">
-    <div class="popup-name">${v.name}</div>
-    <div class="popup-grid">
-      <span class="popup-key">MMSI</span><span class="popup-val">${v.mmsi}</span>
-      <span class="popup-key">Speed</span><span class="popup-val">${sog}</span>
-      <span class="popup-key">Course</span><span class="popup-val">${cog}</span>
-      <span class="popup-key">Lat / Lon</span><span class="popup-val">${lat}, ${lng}</span>
-      <span class="popup-key">Updated</span><span class="popup-val">${age}</span>
-    </div>
+    <div class="popup-name">${v.name || v.mmsi}</div>
+    ${subtitle ? `<div class="popup-subtitle">${subtitle}</div>` : '<div class="popup-subtitle">' + v.mmsi + '</div>'}
+    <div class="popup-grid">${rows}</div>
+    ${voyageRows ? `<div class="popup-grid popup-section">${voyageRows}</div>` : ''}
     <span class="popup-badge ${badgeClass}">${statusLabel}</span>
   </div>`;
 }
@@ -793,10 +737,12 @@ function renderSidebar() {
     const isActive = state.activeMMSI === mmsi;
     const hasData = v.lat != null;
 
-    const dotClass = !hasData ? 'moored' : (isMoving ? 'moving' : (v.navStatus && v.navStatus.toLowerCase().includes('anchor') ? 'anchored' : 'moored'));
+    const dotClass = !hasData ? 'moored' : (isMoving ? 'moving' : (v.nav_status && v.nav_status.toLowerCase().includes('anchor') ? 'anchored' : 'moored'));
     const sogText = v.sog != null ? v.sog.toFixed(1) + ' kn' : '---';
     const cogText = v.cog != null ? cogToCompass(v.cog) : '---';
-    const lastSeen = v.lastUpdate ? `${formatTimestamp(v.lastUpdate)} (${timeAgo(v.lastUpdate)})` : 'waiting...';
+    const lastSeen = v.last_position_update ? `${formatTimestamp(v.last_position_update)} (${timeAgo(v.last_position_update)})` : 'waiting for data...';
+
+    const typeInfo = [v.flag, v.ship_type_name].filter(Boolean).join(' · ');
 
     const card = document.createElement('div');
     card.className = 'vessel-card' + (isActive ? ' active' : '');
@@ -804,8 +750,8 @@ function renderSidebar() {
       <div class="vessel-card-top">
         <div class="vstatus-dot ${dotClass}"></div>
         <div class="vname-block">
-          <div class="vname">${v.name}</div>
-          <div class="vmmsi">${v.mmsi}</div>
+          <div class="vname">${v.name || v.mmsi}</div>
+          <div class="vmmsi">${v.mmsi}${typeInfo ? ' · ' + typeInfo : ''}</div>
         </div>
         <button class="vdelete" title="Remove vessel">&times;</button>
       </div>
@@ -842,192 +788,98 @@ function timeAgo(ts) {
 }
 
 // ══════════════════════════════════════════════
-//  REMOVE VESSEL
+//  API CALLS
 // ══════════════════════════════════════════════
-function removeVessel(mmsi) {
-  const v = state.vessels[mmsi];
-  if (!v) return;
-
-  // Clean up map objects
-  if (v.marker) state.map.removeLayer(v.marker);
-  if (v.trailPolyline) state.map.removeLayer(v.trailPolyline);
-
-  // Clear active selection if this vessel was selected
-  if (state.activeMMSI === mmsi) state.activeMMSI = null;
-
-  delete state.vessels[mmsi];
-  renderSidebar();
-  _doSave();   // immediate save on delete (bypass debounce)
-  // No reconnect needed — client-side filtering handles it.
+async function apiFetch(path, opts = {}) {
+  if (!CONFIG.backendUrl) throw new Error('No backend URL configured');
+  const url = CONFIG.backendUrl.replace(/\/+$/, '') + path;
+  const res = await fetch(url, opts);
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
 }
 
-// ══════════════════════════════════════════════
-//  SELECT VESSEL
-// ══════════════════════════════════════════════
-function selectVessel(mmsi) {
-  state.activeMMSI = mmsi;
-  const v = state.vessels[mmsi];
-
-  // Re-render all markers to update active state
-  Object.keys(state.vessels).forEach(m => updateVesselOnMap(m));
-  renderSidebar();
-
-  if (v.lat != null) {
-    state.map.setView([v.lat, v.lng], Math.max(state.map.getZoom(), 10), { animate: true });
-    v.popup.setContent(buildPopupHTML(v));
-    // Defer openPopup so it runs after Leaflet finishes processing
-    // the icon updates from updateVesselOnMap (setIcon recreates
-    // the marker DOM, which closes any popup opened synchronously).
-    setTimeout(() => v.marker.openPopup(), 10);
-  }
-
-  // Close sidebar on mobile after selection
-  if (window.innerWidth <= 640) {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sidebar-backdrop').classList.remove('visible');
-    const toggle = document.getElementById('sidebar-toggle');
-    toggle.innerHTML = '&#9776;';
-    toggle.style.left = '12px';
-  }
-}
-
-// ══════════════════════════════════════════════
-//  WEBSOCKET — AISstream
-// ══════════════════════════════════════════════
-function connect() {
-  // Clear any pending reconnect
-  if (state.reconnectTimer) {
-    clearTimeout(state.reconnectTimer);
-    state.reconnectTimer = null;
-  }
-
-  setConnStatus('connecting');
-
-  const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
-  state.ws = ws;
-
-  ws.onopen = () => {
-    console.log('[AIS] WebSocket open, sending subscription...');
-
-    // NOTE: FiltersShipMMSI is NOT used — the server-side MMSI filter
-    // is broken/unreliable on the free tier (returns 0 messages).
-    // Instead we subscribe to the full global stream and filter
-    // client-side in handleAISMessage via the state.vessels lookup.
-    const subscriptionMessage = {
-      APIKey: CONFIG.apiKey,
-      BoundingBoxes: [[[-90, -180], [90, 180]]],
-      FilterMessageTypes: ['PositionReport', 'ShipStaticData'],
-    };
-
-    console.log('[AIS] Subscription:', JSON.stringify(subscriptionMessage));
-    ws.send(JSON.stringify(subscriptionMessage));
-    state._wsEverConnected = true;
+async function pollVessels() {
+  try {
+    const vessels = await apiFetch('/api/watchlist/vessels');
     setConnStatus('connected');
-  };
+    state.lastPollOk = true;
 
-  ws.onmessage = async (event) => {
-    try {
-      // AISstream sends binary frames → browser receives Blob, not string
-      const text = (event.data instanceof Blob) ? await event.data.text() : event.data;
-      const msg = JSON.parse(text);
-      state.msgCount++;
-      handleAISMessage(msg);
-      // Update visible counter every 50 messages (avoid DOM thrashing)
-      if (state.msgCount % 50 === 0 || state.matchCount > 0) {
-        const el = document.getElementById('conn-count');
-        if (el) el.textContent = `${state.msgCount} rx · ${state.matchCount} hit`;
+    const serverMMSIs = new Set();
+
+    vessels.forEach(row => {
+      const mmsi = row.mmsi;
+      if (!mmsi) return;
+      serverMMSIs.add(mmsi);
+
+      const existing = state.vessels[mmsi];
+      state.vessels[mmsi] = {
+        mmsi,
+        name: row.name || (existing?.name) || mmsi,
+        imo: row.imo || null,
+        callsign: row.callsign || null,
+        flag: row.flag || null,
+        ship_type: row.ship_type ?? null,
+        ship_type_name: row.ship_type_name || null,
+        length: row.length || null,
+        width: row.width || null,
+        draught: row.draught ?? null,
+        destination: row.destination || null,
+        eta: row.eta || null,
+        lat: row.lat ?? (existing?.lat) ?? null,
+        lng: row.lng ?? (existing?.lng) ?? null,
+        sog: row.sog ?? null,
+        cog: row.cog ?? null,
+        heading: row.heading ?? null,
+        nav_status: row.nav_status || null,
+        last_position_update: row.last_position_update || (existing?.last_position_update) || null,
+        last_static_update: row.last_static_update || null,
+        trail: existing?.trail || [],
+        marker: existing?.marker || null,
+        trailPolyline: existing?.trailPolyline || null,
+        popup: existing?.popup || null,
+      };
+    });
+
+    // Remove vessels that were deleted from the watchlist on another device
+    Object.keys(state.vessels).forEach(mmsi => {
+      if (!serverMMSIs.has(mmsi)) {
+        const v = state.vessels[mmsi];
+        if (v.marker) state.map.removeLayer(v.marker);
+        if (v.trailPolyline) state.map.removeLayer(v.trailPolyline);
+        if (state.activeMMSI === mmsi) state.activeMMSI = null;
+        delete state.vessels[mmsi];
       }
-    } catch(e) {
-      console.warn('[AIS] Parse error:', e);
-    }
-  };
+    });
 
-  ws.onclose = (event) => {
-    console.log('[AIS] WebSocket closed. Code:', event.code, 'Reason:', event.reason);
-    if (!state._wsEverConnected) {
-      setConnStatus('unavailable');
-    } else {
+    Object.keys(state.vessels).forEach(mmsi => updateVesselOnMap(mmsi));
+    renderSidebar();
+    saveCache();
+  } catch (e) {
+    console.warn('[Poll] Failed:', e.message);
+    if (state.lastPollOk) {
       setConnStatus('error');
+      state.lastPollOk = false;
     }
-    state.reconnectTimer = setTimeout(connect, CONFIG.reconnectDelay);
-  };
-
-  ws.onerror = (event) => {
-    console.error('[AIS] WebSocket error:', event);
-  };
+  }
 }
 
-function handleAISMessage(msg) {
-  const mmsi = getMMSI(msg);
-  if (!mmsi || !state.vessels[mmsi]) {
-    // Not in our watchlist — skip (client-side filter)
-    return;
-  }
-  state.matchCount++;
-  console.log('[AIS] Match:', msg.MessageType, mmsi);
-
-  const v = state.vessels[mmsi];
-  const meta = getMeta(msg);
-  v.lastUpdate = Date.now();
-
-  // Update name from metadata if available
-  if (meta.ShipName) {
-    const shipName = meta.ShipName.trim();
-    if (shipName.length > 0 && !/^@+$/.test(shipName)) {
-      v.name = shipName;
+async function fetchTrail(mmsi) {
+  try {
+    const trail = await apiFetch(`/api/vessel/${mmsi}/trail?hours=24`);
+    const v = state.vessels[mmsi];
+    if (v) {
+      v.trail = trail.map(p => ({ lat: p.lat, lng: p.lng }));
+      updateVesselOnMap(mmsi);
     }
+  } catch (e) {
+    console.warn('[Trail] Failed for', mmsi, e.message);
   }
-
-  if (msg.MessageType === 'PositionReport') {
-    const p = msg.Message?.PositionReport;
-    if (!p) return;
-
-    // Position: prefer PositionReport fields (like official example), fallback to metadata
-    v.lat = p.Latitude ?? meta.latitude;
-    v.lng = p.Longitude ?? meta.longitude;
-    v.sog = p.Sog ?? p.SpeedOverGround;
-    v.cog = p.Cog ?? p.CourseOverGround;
-    v.heading = (p.TrueHeading != null && p.TrueHeading !== 511) ? p.TrueHeading : v.cog;
-
-    const navCodes = {
-      0:'Under way (engine)', 1:'Anchored', 2:'Not under command',
-      3:'Restricted manoeuvre', 5:'Moored', 6:'Aground',
-      7:'Fishing', 8:'Under way (sail)', 15:'Unknown'
-    };
-    v.navStatus = navCodes[p.NavigationalStatus] || 'Unknown';
-
-    // Trail
-    if (v.lat != null && v.lng != null) {
-      v.trail.push({ lat: v.lat, lng: v.lng });
-      if (v.trail.length > CONFIG.trailLength) v.trail.shift();
-    }
-
-    updateVesselOnMap(mmsi);
-
-    // Update popup if open
-    if (v.marker && v.marker.isPopupOpen()) {
-      v.popup.setContent(buildPopupHTML(v));
-    }
-  }
-
-  if (msg.MessageType === 'ShipStaticData') {
-    const s = msg.Message?.ShipStaticData;
-    if (s) {
-      const name = s.Name?.trim();
-      if (name && name.length > 0 && !/^@+$/.test(name)) {
-        v.name = name;
-      }
-    }
-  }
-
-  renderSidebar();
-  saveState();
 }
 
 // ══════════════════════════════════════════════
-//  ADD VESSEL DYNAMICALLY
+//  ADD VESSEL
 // ══════════════════════════════════════════════
-function addVessel() {
+async function addVessel() {
   const input = document.getElementById('mmsi-input');
   const errDiv = document.getElementById('add-error');
   const mmsi = input.value.trim().replace(/\s/g, '');
@@ -1046,19 +898,77 @@ function addVessel() {
     return;
   }
 
-  state.vessels[mmsi] = {
-    mmsi, name: mmsi,
-    lat: null, lng: null,
-    sog: null, cog: null, heading: null,
-    navStatus: null, lastUpdate: null,
-    trail: [], marker: null, trailPolyline: null, popup: null,
-  };
+  try {
+    await apiFetch(`/api/watchlist/${mmsi}`, { method: 'POST' });
 
-  input.value = '';
+    state.vessels[mmsi] = {
+      mmsi, name: mmsi,
+      imo: null, callsign: null, flag: null,
+      ship_type: null, ship_type_name: null,
+      length: null, width: null, draught: null,
+      destination: null, eta: null,
+      lat: null, lng: null, sog: null, cog: null, heading: null,
+      nav_status: null, last_position_update: null, last_static_update: null,
+      trail: [], marker: null, trailPolyline: null, popup: null,
+    };
+
+    input.value = '';
+    renderSidebar();
+    saveCache();
+
+    pollVessels();
+  } catch (e) {
+    errDiv.textContent = 'Failed to add — check backend connection';
+    errDiv.style.display = 'block';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  REMOVE VESSEL
+// ══════════════════════════════════════════════
+async function removeVessel(mmsi) {
+  const v = state.vessels[mmsi];
+  if (!v) return;
+
+  if (v.marker) state.map.removeLayer(v.marker);
+  if (v.trailPolyline) state.map.removeLayer(v.trailPolyline);
+  if (state.activeMMSI === mmsi) state.activeMMSI = null;
+  delete state.vessels[mmsi];
   renderSidebar();
-  _doSave();   // immediate save on add (bypass debounce)
-  // No reconnect needed — we filter client-side, so new MMSIs
-  // are picked up automatically from the global stream.
+  saveCache();
+
+  try {
+    await apiFetch(`/api/watchlist/${mmsi}`, { method: 'DELETE' });
+  } catch (e) {
+    console.warn('[Remove] API call failed:', e.message);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  SELECT VESSEL
+// ══════════════════════════════════════════════
+function selectVessel(mmsi) {
+  state.activeMMSI = mmsi;
+  const v = state.vessels[mmsi];
+
+  Object.keys(state.vessels).forEach(m => updateVesselOnMap(m));
+  renderSidebar();
+
+  if (v.lat != null) {
+    state.map.setView([v.lat, v.lng], Math.max(state.map.getZoom(), 10), { animate: true });
+    v.popup.setContent(buildPopupHTML(v));
+    setTimeout(() => v.marker.openPopup(), 10);
+  }
+
+  fetchTrail(mmsi);
+
+  if (window.innerWidth <= 640) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('visible');
+    const toggle = document.getElementById('sidebar-toggle');
+    toggle.innerHTML = '&#9776;';
+    toggle.style.left = '12px';
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -1070,16 +980,15 @@ function setConnStatus(status) {
   dot.className = '';
   if (status === 'connected') {
     dot.classList.add('connected');
-    label.textContent = 'Live · AISstream';
+    label.textContent = 'Live · Backend';
     label.style.color = 'var(--accent)';
-  } else if (status === 'unavailable') {
-    dot.classList.add('error');
-    label.textContent = 'AISstream down · retrying...';
-    label.style.color = 'var(--amber)';
   } else if (status === 'error') {
     dot.classList.add('error');
-    label.textContent = 'Disconnected · retrying...';
+    label.textContent = 'Backend unreachable';
     label.style.color = 'var(--red)';
+  } else if (status === 'no-backend') {
+    label.textContent = 'No backend configured';
+    label.style.color = 'var(--amber)';
   } else {
     label.textContent = 'Connecting...';
     label.style.color = 'var(--muted)';
@@ -1087,64 +996,47 @@ function setConnStatus(status) {
 }
 
 // ══════════════════════════════════════════════
-//  LOCALSTORAGE — persist vessels & positions
+//  LOCALSTORAGE CACHE
 // ══════════════════════════════════════════════
-const STORAGE_KEY = 'rsc_vessel_tracker';
-let _saveTimer = null;
+const CACHE_KEY = 'rsc_vessel_cache';
 
-function saveState() {
-  // Debounce: batch rapid updates into one write every 2s
-  if (_saveTimer) return;
-  _saveTimer = setTimeout(() => { _saveTimer = null; _doSave(); }, 2000);
-}
-
-function _doSave() {
+function saveCache() {
   try {
     const data = {};
     Object.entries(state.vessels).forEach(([mmsi, v]) => {
       data[mmsi] = {
-        mmsi: v.mmsi,
-        name: v.name,
-        lat: v.lat,
-        lng: v.lng,
-        sog: v.sog,
-        cog: v.cog,
-        heading: v.heading,
-        navStatus: v.navStatus,
-        lastUpdate: v.lastUpdate,
-        trail: v.trail.slice(-CONFIG.trailLength),  // keep trails bounded
+        mmsi: v.mmsi, name: v.name,
+        imo: v.imo, callsign: v.callsign, flag: v.flag,
+        ship_type: v.ship_type, ship_type_name: v.ship_type_name,
+        length: v.length, width: v.width, draught: v.draught,
+        destination: v.destination, eta: v.eta,
+        lat: v.lat, lng: v.lng, sog: v.sog, cog: v.cog,
+        heading: v.heading, nav_status: v.nav_status,
+        last_position_update: v.last_position_update,
       };
     });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
   } catch (e) {
-    console.warn('[Storage] Save failed:', e);
+    console.warn('[Cache] Save failed:', e);
   }
 }
 
-function loadState() {
+function loadCache() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return;
     const data = JSON.parse(raw);
     Object.entries(data).forEach(([mmsi, saved]) => {
       state.vessels[mmsi] = {
-        mmsi: saved.mmsi,
-        name: saved.name || mmsi,
-        lat: saved.lat,
-        lng: saved.lng,
-        sog: saved.sog,
-        cog: saved.cog,
-        heading: saved.heading,
-        navStatus: saved.navStatus,
-        lastUpdate: saved.lastUpdate,
-        trail: saved.trail || [],
+        ...saved,
+        trail: [],
         marker: null,
         trailPolyline: null,
         popup: null,
       };
     });
   } catch (e) {
-    console.warn('[Storage] Load failed:', e);
+    console.warn('[Cache] Load failed:', e);
   }
 }
 
@@ -1162,9 +1054,9 @@ function toggleSidebar() {
 }
 
 // ══════════════════════════════════════════════
-//  EXPORT / IMPORT — sync vessel list across devices
+//  EXPORT / IMPORT
 // ══════════════════════════════════════════════
-let _syncMode = null; // 'export' or 'import'
+let _syncMode = null;
 
 function exportVessels() {
   const mmsis = Object.keys(state.vessels);
@@ -1173,13 +1065,7 @@ function exportVessels() {
   const data = {};
   mmsis.forEach(mmsi => {
     const v = state.vessels[mmsi];
-    data[mmsi] = {
-      mmsi: v.mmsi, name: v.name,
-      lat: v.lat, lng: v.lng,
-      sog: v.sog, cog: v.cog,
-      heading: v.heading, navStatus: v.navStatus,
-      lastUpdate: v.lastUpdate,
-    };
+    data[mmsi] = { mmsi: v.mmsi, name: v.name };
   });
 
   _syncMode = 'export';
@@ -1191,15 +1077,13 @@ function exportVessels() {
   ta.value = JSON.stringify(data, null, 2);
   ta.readOnly = true;
   document.getElementById('sync-overlay').classList.remove('hidden');
-
-  // Auto-select text for easy copying
   setTimeout(() => { ta.focus(); ta.select(); }, 100);
 }
 
 function importVessels() {
   _syncMode = 'import';
   document.getElementById('sync-title').textContent = 'Import vessels';
-  document.getElementById('sync-desc').textContent = 'Paste the exported vessel list below, then tap Import.';
+  document.getElementById('sync-desc').textContent = 'Paste the vessel list below (MMSI numbers), then tap Import. They will be added to the watchlist.';
   document.getElementById('sync-confirm').textContent = 'Import';
   document.getElementById('sync-status').textContent = '';
   const ta = document.getElementById('sync-textarea');
@@ -1214,12 +1098,11 @@ function closeSyncModal() {
   _syncMode = null;
 }
 
-function syncConfirm() {
+async function syncConfirm() {
   const ta = document.getElementById('sync-textarea');
   const statusEl = document.getElementById('sync-status');
 
   if (_syncMode === 'export') {
-    // Select all + try clipboard copy
     ta.focus();
     ta.select();
     try {
@@ -1228,7 +1111,6 @@ function syncConfirm() {
           statusEl.textContent = 'Copied to clipboard!';
           setTimeout(closeSyncModal, 1200);
         }).catch(() => {
-          // Clipboard API failed — fall back to execCommand
           document.execCommand('copy');
           statusEl.textContent = 'Copied! (If not, manually select all & copy)';
         });
@@ -1249,28 +1131,19 @@ function syncConfirm() {
     try {
       const data = JSON.parse(text);
       let added = 0;
-      Object.entries(data).forEach(([mmsi, saved]) => {
-        if (!/^\d{9}$/.test(mmsi)) return;
-        if (state.vessels[mmsi]) return;
+      const mmsis = Object.keys(data).filter(m => /^\d{9}$/.test(m) && !state.vessels[m]);
 
-        state.vessels[mmsi] = {
-          mmsi: saved.mmsi || mmsi,
-          name: saved.name || mmsi,
-          lat: saved.lat || null, lng: saved.lng || null,
-          sog: saved.sog || null, cog: saved.cog || null,
-          heading: saved.heading || null,
-          navStatus: saved.navStatus || null,
-          lastUpdate: saved.lastUpdate || null,
-          trail: [], marker: null, trailPolyline: null, popup: null,
-        };
-        updateVesselOnMap(mmsi);
-        added++;
-      });
+      for (const mmsi of mmsis) {
+        try {
+          await apiFetch(`/api/watchlist/${mmsi}`, { method: 'POST' });
+          added++;
+        } catch (e) { /* continue */ }
+      }
 
-      renderSidebar();
-      _doSave();
+      await pollVessels();
+
       statusEl.style.color = 'var(--accent)';
-      statusEl.textContent = `Imported ${added} new vessel(s)!`;
+      statusEl.textContent = `Added ${added} vessel(s) to watchlist!`;
       setTimeout(closeSyncModal, 1500);
     } catch (e) {
       statusEl.style.color = 'var(--red)';
@@ -1280,11 +1153,54 @@ function syncConfirm() {
 }
 
 // ══════════════════════════════════════════════
+//  BACKEND URL MANAGEMENT
+// ══════════════════════════════════════════════
+function saveBackendUrl() {
+  const input = document.getElementById('backend-input');
+  const errDiv = document.getElementById('backend-error');
+  let url = input.value.trim();
+
+  if (!url || url.length < 5) {
+    errDiv.style.display = 'block';
+    return;
+  }
+
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
+  }
+  url = url.replace(/\/+$/, '');
+
+  errDiv.style.display = 'none';
+  localStorage.setItem('rsc_backend_url', url);
+  CONFIG.backendUrl = url;
+  document.getElementById('backend-overlay').classList.add('hidden');
+
+  startPolling();
+}
+
+function showBackendModal() {
+  const overlay = document.getElementById('backend-overlay');
+  const input = document.getElementById('backend-input');
+  overlay.classList.remove('hidden');
+  input.value = CONFIG.backendUrl;
+  input.focus();
+}
+
+// ══════════════════════════════════════════════
+//  POLLING LIFECYCLE
+// ══════════════════════════════════════════════
+function startPolling() {
+  if (state.pollTimer) clearInterval(state.pollTimer);
+  setConnStatus('connecting');
+  pollVessels();
+  state.pollTimer = setInterval(pollVessels, CONFIG.pollInterval);
+}
+
+// ══════════════════════════════════════════════
 //  STALENESS TICKER
 // ══════════════════════════════════════════════
 setInterval(() => {
   renderSidebar();
-  // Refresh open popup timestamps
   Object.values(state.vessels).forEach(v => {
     if (v.marker && v.marker.isPopupOpen()) {
       v.popup.setContent(buildPopupHTML(v));
@@ -1293,44 +1209,14 @@ setInterval(() => {
 }, 10000);
 
 // ══════════════════════════════════════════════
-//  API KEY MANAGEMENT
-// ══════════════════════════════════════════════
-function saveApiKey() {
-  const input = document.getElementById('apikey-input');
-  const errDiv = document.getElementById('apikey-error');
-  const key = input.value.trim();
-
-  if (key.length < 10) {
-    errDiv.style.display = 'block';
-    return;
-  }
-
-  errDiv.style.display = 'none';
-  localStorage.setItem('rsc_api_key', key);
-  CONFIG.apiKey = key;
-  document.getElementById('apikey-overlay').classList.add('hidden');
-  connect();  // start the WebSocket with the new key
-}
-
-function showApiKeyModal() {
-  const overlay = document.getElementById('apikey-overlay');
-  const input = document.getElementById('apikey-input');
-  overlay.classList.remove('hidden');
-  input.value = CONFIG.apiKey;
-  input.focus();
-}
-
-// ══════════════════════════════════════════════
 //  BOOT
 // ══════════════════════════════════════════════
 initMap();
-loadState();       // restore saved vessels & last-known positions
+loadCache();
 renderSidebar();
 
-// Place cached vessels on the map immediately
 Object.keys(state.vessels).forEach(mmsi => updateVesselOnMap(mmsi));
 
-// Fit map to show all cached vessels (if any have positions)
 const cached = Object.values(state.vessels).filter(v => v.lat != null);
 if (cached.length === 1) {
   state.map.setView([cached[0].lat, cached[0].lng], 10, { animate: false });
@@ -1339,22 +1225,19 @@ if (cached.length === 1) {
   state.map.fitBounds(bounds.pad(0.15), { animate: false });
 }
 
-// If we have an API key, connect; otherwise show the setup modal
-if (CONFIG.apiKey) {
-  connect();
+if (CONFIG.backendUrl) {
+  startPolling();
 } else {
-  showApiKeyModal();
+  setConnStatus('no-backend');
+  showBackendModal();
 }
-_doSave();  // persist initial watchlist immediately
 
-// Enter key on MMSI input
 document.getElementById('mmsi-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') addVessel();
 });
 
-// Enter key on API key input
-document.getElementById('apikey-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') saveApiKey();
+document.getElementById('backend-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveBackendUrl();
 });
 </script>
 </body>
