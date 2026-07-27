@@ -856,10 +856,8 @@ async function pollVessels() {
     saveCache();
   } catch (e) {
     console.warn('[Poll] Failed:', e.message);
-    if (state.lastPollOk) {
-      setConnStatus('error');
-      state.lastPollOk = false;
-    }
+    setConnStatus('error');
+    state.lastPollOk = false;
   }
 }
 
