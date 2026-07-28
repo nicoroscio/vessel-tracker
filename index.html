@@ -45,48 +45,6 @@
     display: flex;
     flex-direction: column;
     z-index: 1000;
-    position: relative;
-  }
-
-  /* ── Expand-to-fleets button (hover-revealed) ── */
-  #fleet-expand-btn {
-    position: absolute;
-    top: 16px;
-    right: 14px;
-    z-index: 1200;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 9px;
-    background: var(--accent-dim);
-    border: 1px solid var(--accent);
-    border-radius: 5px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent);
-    cursor: pointer;
-    opacity: 0;
-    transform: translateY(-2px);
-    pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease, background 0.15s;
-  }
-
-  #sidebar:hover #fleet-expand-btn { opacity: 1; transform: translateY(0); pointer-events: auto; }
-  #fleet-expand-btn:hover { background: rgba(0,212,170,0.22); }
-  #fleet-expand-btn svg { width: 12px; height: 12px; display: block; }
-
-  /* ── Fleet chip on sidebar cards ── */
-  .vfleets { display: flex; flex-wrap: wrap; gap: 4px; padding-left: 15px; margin-top: 4px; }
-  .vfleet-chip {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 8px;
-    letter-spacing: 0.04em;
-    padding: 1px 6px;
-    border-radius: 3px;
-    border: 1px solid;
-    white-space: nowrap;
   }
 
   #sidebar-header {
@@ -144,21 +102,6 @@
   }
 
   #conn-label { color: var(--muted); }
-
-  #conn-count {
-    margin-left: auto;
-    padding: 2px 7px;
-    border-radius: 9px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    color: var(--muted);
-    font-size: 9px;
-    letter-spacing: 0.03em;
-    white-space: nowrap;
-  }
-  #conn-count.complete { color: var(--accent); border-color: var(--accent); }
-  #conn-count.partial { color: var(--amber); border-color: var(--amber); }
-  #conn-count.hidden { display: none; }
 
   /* ── Vessel list ── */
   #vessel-list { flex: 1; overflow-y: auto; padding: 6px 0; }
@@ -516,6 +459,137 @@
 
   #sync-status { font-size: 10px; color: var(--accent); margin-bottom: 8px; min-height: 14px; }
 
+  /* ── Playback bar ── */
+  #playback-bar {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 1200;
+    background: var(--surface);
+    border-top: 1px solid var(--border2);
+    padding: 12px 20px 16px;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
+  }
+
+  #playback-bar.active { display: block; }
+
+  #playback-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  #playback-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #playback-info {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    display: flex;
+    gap: 14px;
+  }
+
+  #playback-info span { color: var(--text); }
+
+  #playback-close {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  #playback-close:hover { background: rgba(239,68,68,0.15); color: var(--red); border-color: var(--red); }
+
+  #playback-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #playback-time-start, #playback-time-end {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    flex-shrink: 0;
+    width: 80px;
+  }
+
+  #playback-time-end { text-align: right; }
+
+  #playback-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--surface2);
+    outline: none;
+    cursor: pointer;
+  }
+
+  #playback-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 6px rgba(0,212,170,0.4);
+    cursor: grab;
+  }
+
+  #playback-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 6px rgba(0,212,170,0.4);
+    cursor: grab;
+  }
+
+  #playback-timestamp {
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    margin-top: 6px;
+  }
+
+  .popup-history-btn {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 5px 0;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    cursor: pointer;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+
+  .popup-history-btn:hover { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+
   /* ── Mobile responsive ── */
   @media (max-width: 640px) {
     #sidebar-toggle { display: block; }
@@ -552,305 +626,9 @@
 
     .leaflet-control-zoom { margin-top: 60px !important; }
 
-  }
-
-  /* ══════════════════════════════════════════════
-     FLEET MANAGEMENT — full-page view
-     ══════════════════════════════════════════════ */
-  #fleet-view {
-    position: fixed;
-    inset: 0;
-    z-index: 3000;
-    background: var(--bg);
-    display: flex;
-    flex-direction: column;
-    transform: translateX(-100%);
-    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: transform;
-  }
-  #fleet-view.open { transform: translateX(0); }
-
-  #fleet-view-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 18px 26px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-  }
-
-  #fleet-view-header .fv-brand {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.18em;
-    color: var(--accent);
-    text-transform: uppercase;
-  }
-  #fleet-view-header .fv-h-title { font-size: 17px; font-weight: 500; margin-top: 2px; }
-  #fleet-view-header .fv-h-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
-  .fv-h-titles { flex: 1; min-width: 0; }
-
-  .fv-close {
-    width: 34px;
-    height: 34px;
-    border-radius: 7px;
-    border: 1px solid var(--border2);
-    background: var(--surface2);
-    color: var(--muted);
-    font-size: 18px;
-    line-height: 32px;
-    text-align: center;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-    flex-shrink: 0;
-  }
-  .fv-close:hover { background: var(--border2); color: var(--text); }
-
-  #fleet-body { flex: 1; display: flex; min-height: 0; }
-
-  /* ── Fleet rail (list of fleets / filters) ── */
-  #fleet-rail {
-    width: 260px;
-    min-width: 260px;
-    border-right: 1px solid var(--border);
-    background: var(--surface);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    padding: 14px 12px;
-  }
-
-  .fv-rail-label {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    padding: 8px 10px 6px;
-  }
-
-  .fleet-rail-item {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 9px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: background 0.15s, border-color 0.15s;
-  }
-  .fleet-rail-item:hover { background: var(--surface2); }
-  .fleet-rail-item.active { background: var(--surface2); border-color: var(--border2); }
-
-  .fleet-rail-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-  .fleet-rail-name { flex: 1; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .fleet-rail-count {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    background: var(--surface2);
-    border-radius: 10px;
-    padding: 1px 7px;
-    flex-shrink: 0;
-  }
-  .fleet-rail-item.active .fleet-rail-count { background: var(--bg); }
-
-  .fleet-rail-edit {
-    flex-shrink: 0;
-    width: 18px; height: 18px;
-    border: none; background: transparent;
-    color: var(--muted); cursor: pointer;
-    border-radius: 3px; font-size: 12px; line-height: 18px; text-align: center;
-    opacity: 0; transition: opacity 0.15s, background 0.15s, color 0.15s;
-  }
-  .fleet-rail-item:hover .fleet-rail-edit { opacity: 1; }
-  .fleet-rail-edit:hover { background: var(--border2); color: var(--text); }
-  .fleet-rail-edit.del:hover { background: rgba(239,68,68,0.15); color: var(--red); }
-
-  .fv-rail-divider { height: 1px; background: var(--border); margin: 10px 6px; }
-
-  #fleet-new-btn {
-    display: flex; align-items: center; justify-content: center; gap: 7px;
-    margin: 4px 4px 0;
-    padding: 9px;
-    background: var(--accent-dim);
-    border: 1px solid var(--accent);
-    border-radius: 6px;
-    color: var(--accent);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  #fleet-new-btn:hover { background: rgba(0,212,170,0.22); }
-
-  /* ── Fleet main (vessel grid) ── */
-  #fleet-main { flex: 1; overflow-y: auto; padding: 22px 26px 40px; }
-
-  .fv-main-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 18px; }
-  .fv-main-title { font-size: 15px; font-weight: 500; }
-  .fv-main-sub { font-size: 11px; color: var(--muted); }
-
-  .fv-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 14px;
-  }
-
-  .fv-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 15px 16px;
-    position: relative;
-    transition: border-color 0.15s;
-  }
-  .fv-card:hover { border-color: var(--border2); }
-  .fv-card::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 14px; bottom: 14px;
-    width: 3px;
-    border-radius: 0 2px 2px 0;
-    background: var(--fv-accent, var(--border2));
-  }
-
-  .fv-card-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
-  .fv-card-name-block { flex: 1; min-width: 0; }
-  .fv-card-name {
-    font-size: 14px; font-weight: 500; color: var(--text);
-    display: flex; align-items: center; gap: 8px;
-  }
-  .fv-card-name .fv-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .fv-status-dot.moving { background: var(--accent); }
-  .fv-status-dot.anchored { background: var(--amber); }
-  .fv-status-dot.moored { background: var(--muted); }
-  .fv-card-sub { font-size: 10px; color: var(--muted); margin-top: 3px; padding-left: 16px; }
-
-  .fv-armatore-btn {
-    flex-shrink: 0;
-    display: flex; align-items: center; gap: 6px;
-    padding: 6px 11px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: 6px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.04em;
-    color: var(--text);
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
-  }
-  .fv-armatore-btn:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
-  .fv-armatore-btn svg { width: 12px; height: 12px; }
-
-  .fv-detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px 14px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-  }
-  .fv-detail { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-  .fv-detail-k {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--muted);
-  }
-  .fv-detail-v {
-    font-size: 12px; color: var(--text);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-
-  .fv-card-fleets { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
-  .fv-card-fleet-chip {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 9px; letter-spacing: 0.03em;
-    padding: 2px 8px; border-radius: 4px; border: 1px solid;
-  }
-
-  .fv-empty {
-    grid-column: 1 / -1;
-    text-align: center;
-    color: var(--muted);
-    font-size: 12px;
-    font-style: italic;
-    padding: 50px 0;
-  }
-
-  /* ── Armatore assign popover ── */
-  #armatore-menu {
-    position: fixed;
-    z-index: 3200;
-    width: 250px;
-    max-height: 340px;
-    overflow-y: auto;
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 8px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-    padding: 6px;
-  }
-  #armatore-menu.hidden { display: none; }
-  .arm-title {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--muted);
-    padding: 7px 9px 6px;
-  }
-  .arm-item {
-    display: flex; align-items: center; gap: 9px;
-    padding: 8px 9px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.12s;
-  }
-  .arm-item:hover { background: var(--surface2); }
-  .arm-check {
-    width: 15px; height: 15px; flex-shrink: 0;
-    border: 1px solid var(--border2); border-radius: 4px;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--bg); font-size: 10px; line-height: 1;
-  }
-  .arm-item.on .arm-check { background: var(--accent); border-color: var(--accent); }
-  .arm-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .arm-name { flex: 1; font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .arm-divider { height: 1px; background: var(--border); margin: 5px 4px; }
-  .arm-new { color: var(--accent); font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
-  .arm-empty { padding: 8px 9px; font-size: 11px; color: var(--muted); font-style: italic; }
-
-  /* ── Generic 2-button modal footer ── */
-  .modal-actions { display: flex; gap: 8px; }
-  .modal-actions button {
-    flex: 1;
-    padding: 8px;
-    border-radius: 4px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    cursor: pointer;
-    border: 1px solid var(--border2);
-  }
-  .modal-btn-cancel { background: var(--surface2); color: var(--muted); }
-  .modal-btn-cancel:hover { background: var(--border2); color: var(--text); }
-  .modal-btn-save { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
-  .modal-btn-save:hover { background: rgba(0,212,170,0.22); }
-
-  @media (max-width: 720px) {
-    #fleet-rail { width: 200px; min-width: 200px; }
-    #fleet-main { padding: 16px 14px 40px; }
-  }
-  @media (max-width: 560px) {
-    #fleet-body { flex-direction: column; }
-    #fleet-rail {
-      width: 100%; min-width: 0;
-      flex-direction: row; flex-wrap: nowrap; overflow-x: auto;
-      border-right: none; border-bottom: 1px solid var(--border);
-      padding: 10px;
-    }
-    #fleet-rail .fv-rail-label, #fleet-rail .fv-rail-divider { display: none; }
-    .fleet-rail-item { flex-shrink: 0; }
-    #fleet-new-btn { flex-shrink: 0; margin: 0; }
-    .fv-detail-grid { grid-template-columns: 1fr 1fr; }
+    #playback-bar { padding: 10px 14px 14px; }
+    #playback-header { flex-wrap: wrap; gap: 8px; }
+    #playback-info { width: 100%; order: 3; }
   }
 </style>
 </head>
@@ -885,10 +663,6 @@
   <button id="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
   <div id="sidebar-backdrop" onclick="toggleSidebar()"></div>
   <div id="sidebar">
-    <button id="fleet-expand-btn" onclick="openFleetView()" title="Open fleet management">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h9M11 8l-3-3M11 8l-3 3M14 2v12"/></svg>
-      Fleets
-    </button>
     <div id="sidebar-header">
       <div class="brand">RSC Enterprises</div>
       <div class="title">Vessel Tracker</div>
@@ -898,7 +672,6 @@
     <div id="conn-bar">
       <div id="conn-dot"></div>
       <span id="conn-label">Connecting...</span>
-      <span id="conn-count" class="hidden" title="Vessels with position data / total tracked"></span>
     </div>
 
     <div id="vessel-list"></div>
@@ -922,37 +695,23 @@
   <div id="map"></div>
 </div>
 
-<!-- ══ Fleet management full-page view ══ -->
-<div id="fleet-view">
-  <div id="fleet-view-header">
-    <div class="fv-h-titles">
-      <div class="fv-brand">RSC Enterprises</div>
-      <div class="fv-h-title">Fleet Management</div>
-      <div class="fv-h-sub" id="fleet-view-sub">Group vessels by owner</div>
+<!-- Playback bar -->
+<div id="playback-bar">
+  <div id="playback-header">
+    <div id="playback-name"></div>
+    <div id="playback-info">
+      <span id="playback-speed"></span>
+      <span id="playback-course"></span>
+      <span id="playback-status"></span>
     </div>
-    <button class="fv-close" onclick="closeFleetView()" title="Close (Esc)">&times;</button>
+    <button id="playback-close" onclick="exitPlayback()">Exit</button>
   </div>
-  <div id="fleet-body">
-    <div id="fleet-rail"></div>
-    <div id="fleet-main"></div>
+  <div id="playback-slider-row">
+    <div id="playback-time-start"></div>
+    <input type="range" id="playback-slider" min="0" max="0" value="0" oninput="onPlaybackSlide(this.value)"/>
+    <div id="playback-time-end"></div>
   </div>
-</div>
-
-<!-- Armatore assign popover -->
-<div id="armatore-menu" class="hidden"></div>
-
-<!-- Fleet name modal (create / rename) -->
-<div id="fleet-name-overlay" class="modal-overlay hidden" onclick="if(event.target===this)closeFleetNameModal()">
-  <div class="modal-box">
-    <h2 id="fleet-name-title">New Fleet</h2>
-    <p id="fleet-name-desc">Give this fleet a name — for example the owner or company.</p>
-    <input id="fleet-name-input" class="modal-input" type="text" placeholder="e.g. Acme Shipping S.p.A." maxlength="60"/>
-    <div id="fleet-name-error" class="modal-error">Please enter a name</div>
-    <div class="modal-actions">
-      <button class="modal-btn-cancel" onclick="closeFleetNameModal()">Cancel</button>
-      <button class="modal-btn-save" id="fleet-name-save">Save</button>
-    </div>
-  </div>
+  <div id="playback-timestamp"></div>
 </div>
 
 <script>
@@ -974,13 +733,8 @@ const state = {
   activeMMSI: null,
   pollTimer: null,
   lastPollOk: false,
-  fleets: [],          // [{ id, name, color, mmsis: [] }]
-  fleetFilter: 'all',  // 'all' | 'unassigned' | <fleetId>
-  fleetViewOpen: false,
+  playback: null,
 };
-
-// Distinct colors cycled through for new fleets
-const FLEET_COLORS = ['#00d4aa','#3b82f6','#f59e0b','#a855f7','#ec4899','#10b981','#ef4444','#eab308','#06b6d4','#f97316'];
 
 // ══════════════════════════════════════════════
 //  MAP INIT
@@ -1115,6 +869,7 @@ function buildPopupHTML(v) {
     <div class="popup-grid">${rows}</div>
     ${voyageRows ? `<div class="popup-grid popup-section">${voyageRows}</div>` : ''}
     <span class="popup-badge ${badgeClass}">${statusLabel}</span>
+    ${!state.playback ? `<button class="popup-history-btn" onclick="enterPlayback('${v.mmsi}')">View History</button>` : ''}
   </div>`;
 }
 
@@ -1130,16 +885,6 @@ function renderSidebar() {
   });
   document.getElementById('vessel-count').textContent = `${mmsis.length} vessel${mmsis.length !== 1 ? 's' : ''} tracked`;
 
-  const found = mmsis.filter(m => state.vessels[m].lat != null).length;
-  const countEl = document.getElementById('conn-count');
-  if (mmsis.length > 0) {
-    countEl.textContent = `${found} / ${mmsis.length} found`;
-    countEl.classList.remove('hidden', 'complete', 'partial');
-    countEl.classList.add(found === mmsis.length ? 'complete' : 'partial');
-  } else {
-    countEl.classList.add('hidden');
-  }
-
   list.innerHTML = '';
   mmsis.forEach(mmsi => {
     const v = state.vessels[mmsi];
@@ -1154,27 +899,19 @@ function renderSidebar() {
 
     const typeInfo = [v.flag, v.ship_type_name].filter(Boolean).join(' · ');
 
-    const vFleets = fleetsForVessel(mmsi);
-    const fleetChips = vFleets.length
-      ? `<div class="vfleets">${vFleets.map(f =>
-          `<span class="vfleet-chip" style="color:${f.color};border-color:${f.color}44;background:${f.color}14">${escapeHtml(f.name)}</span>`
-        ).join('')}</div>`
-      : '';
-
     const card = document.createElement('div');
     card.className = 'vessel-card' + (isActive ? ' active' : '');
     card.innerHTML = `
       <div class="vessel-card-top">
         <div class="vstatus-dot ${dotClass}"></div>
         <div class="vname-block">
-          <div class="vname">${escapeHtml(v.name || v.mmsi)}</div>
-          <div class="vmmsi">${v.mmsi}${typeInfo ? ' · ' + escapeHtml(typeInfo) : ''}</div>
+          <div class="vname">${v.name || v.mmsi}</div>
+          <div class="vmmsi">${v.mmsi}${typeInfo ? ' · ' + typeInfo : ''}</div>
         </div>
         <button class="vdelete" title="Remove vessel">&times;</button>
       </div>
       <div class="vmeta">${hasData ? `<span>${sogText}</span> &middot; <span>${cogText}</span>` : 'No data yet'}</div>
-      <div class="vlastupdate">${lastSeen}</div>
-      ${fleetChips}`;
+      <div class="vlastupdate">${lastSeen}</div>`;
     card.onclick = () => selectVessel(mmsi);
     card.querySelector('.vdelete').onclick = (e) => { e.stopPropagation(); removeVessel(mmsi); };
     list.appendChild(card);
@@ -1271,7 +1008,6 @@ async function pollVessels() {
 
     Object.keys(state.vessels).forEach(mmsi => updateVesselOnMap(mmsi));
     renderSidebar();
-    if (state.fleetViewOpen) renderFleetView();
     saveCache();
     maybeRefreshTrails();
   } catch (e) {
@@ -1586,428 +1322,6 @@ async function syncConfirm() {
 }
 
 // ══════════════════════════════════════════════
-//  FLEET MANAGEMENT
-// ══════════════════════════════════════════════
-//  Fleets are groups of vessels (e.g. owned by the same company / "armatore").
-//  Membership is many-to-many: a vessel can belong to several fleets.
-//
-//  Backend API (mirrors the /api/watchlist/* style). All calls are optimistic
-//  and fall back to a localStorage cache, so the UI works even before these
-//  endpoints exist on the Raspberry Pi backend:
-//    GET    /api/fleets                        -> [{ id, name, color, mmsis: [] }]
-//    POST   /api/fleets            { id, name, color }
-//    PATCH  /api/fleets/:id        { name }
-//    DELETE /api/fleets/:id
-//    POST   /api/fleets/:id/vessels/:mmsi      (add vessel to fleet)
-//    DELETE /api/fleets/:id/vessels/:mmsi      (remove vessel from fleet)
-// ══════════════════════════════════════════════
-const FLEETS_CACHE_KEY = 'rsc_fleets';
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
-function genFleetId() {
-  return 'fleet_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-}
-
-function nextFleetColor() {
-  const used = new Set(state.fleets.map(f => f.color));
-  return FLEET_COLORS.find(c => !used.has(c)) || FLEET_COLORS[state.fleets.length % FLEET_COLORS.length];
-}
-
-function normalizeFleet(f) {
-  return {
-    id: f.id || genFleetId(),
-    name: (f.name || 'Unnamed fleet').toString(),
-    color: f.color || nextFleetColor(),
-    mmsis: Array.isArray(f.mmsis) ? f.mmsis.map(String) : [],
-  };
-}
-
-function getFleet(id) { return state.fleets.find(f => f.id === id); }
-function fleetsForVessel(mmsi) { return state.fleets.filter(f => f.mmsis.includes(String(mmsi))); }
-
-// ── Persistence ──
-function saveFleetsCache() {
-  try { localStorage.setItem(FLEETS_CACHE_KEY, JSON.stringify(state.fleets)); }
-  catch (e) { console.warn('[Fleets] Cache save failed:', e); }
-}
-function loadFleetsCache() {
-  try {
-    const raw = localStorage.getItem(FLEETS_CACHE_KEY);
-    if (!raw) return;
-    const arr = JSON.parse(raw);
-    if (Array.isArray(arr)) state.fleets = arr.map(normalizeFleet);
-  } catch (e) { console.warn('[Fleets] Cache load failed:', e); }
-}
-
-// ── Backend calls (non-fatal; local cache is source of truth on failure) ──
-async function apiCall(path, opts = {}) {
-  if (!CONFIG.backendUrl) throw new Error('No backend URL configured');
-  const url = CONFIG.backendUrl.replace(/\/+$/, '') + path;
-  const res = await fetch(url, opts);
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  return res;
-}
-
-function apiSend(path, method, body) {
-  const opts = { method };
-  if (body !== undefined) {
-    opts.headers = { 'Content-Type': 'application/json' };
-    opts.body = JSON.stringify(body);
-  }
-  apiCall(path, opts).catch(e => console.warn('[Fleets]', method, path, '—', e.message, '(kept locally)'));
-}
-
-async function fetchFleets() {
-  try {
-    const data = await apiFetch('/api/fleets');
-    if (Array.isArray(data)) {
-      state.fleets = data.map(normalizeFleet);
-      saveFleetsCache();
-      if (state.fleetViewOpen) renderFleetView();
-      renderSidebar();
-    }
-  } catch (e) {
-    // Backend has no /api/fleets endpoint yet — using local cache.
-  }
-}
-
-// ── Mutations (optimistic: update state → cache → UI, then sync backend) ──
-function createFleet(name) {
-  const fleet = { id: genFleetId(), name: name.trim(), color: nextFleetColor(), mmsis: [] };
-  state.fleets.push(fleet);
-  saveFleetsCache();
-  apiSend('/api/fleets', 'POST', { id: fleet.id, name: fleet.name, color: fleet.color });
-  return fleet;
-}
-
-function renameFleet(id, name) {
-  const f = getFleet(id);
-  if (!f) return;
-  f.name = name.trim();
-  saveFleetsCache();
-  apiSend(`/api/fleets/${id}`, 'PATCH', { name: f.name });
-  refreshFleetUI();
-}
-
-function deleteFleet(id) {
-  state.fleets = state.fleets.filter(f => f.id !== id);
-  if (state.fleetFilter === id) state.fleetFilter = 'all';
-  saveFleetsCache();
-  apiSend(`/api/fleets/${id}`, 'DELETE');
-  refreshFleetUI();
-}
-
-function toggleVesselFleet(mmsi, id) {
-  const f = getFleet(id);
-  if (!f) return;
-  mmsi = String(mmsi);
-  const i = f.mmsis.indexOf(mmsi);
-  if (i >= 0) {
-    f.mmsis.splice(i, 1);
-    apiSend(`/api/fleets/${id}/vessels/${mmsi}`, 'DELETE');
-  } else {
-    f.mmsis.push(mmsi);
-    apiSend(`/api/fleets/${id}/vessels/${mmsi}`, 'POST');
-  }
-  saveFleetsCache();
-}
-
-function refreshFleetUI() {
-  if (state.fleetViewOpen) renderFleetView();
-  renderSidebar();
-}
-
-// ── Open / close full-page view ──
-function openFleetView() {
-  state.fleetViewOpen = true;
-  document.getElementById('fleet-view').classList.add('open');
-  renderFleetView();
-  fetchFleets();
-}
-
-function closeFleetView() {
-  state.fleetViewOpen = false;
-  document.getElementById('fleet-view').classList.remove('open');
-  closeArmatoreMenu();
-}
-
-function setFleetFilter(f) {
-  state.fleetFilter = f;
-  renderFleetView();
-}
-
-// ── Render: rail + main ──
-function renderFleetView() {
-  renderFleetRail();
-  renderFleetMain();
-}
-
-function vesselsInFilter(filter) {
-  const all = Object.keys(state.vessels);
-  if (filter === 'all') return all;
-  if (filter === 'unassigned') return all.filter(m => fleetsForVessel(m).length === 0);
-  const f = getFleet(filter);
-  return f ? all.filter(m => f.mmsis.includes(m)) : [];
-}
-
-function renderFleetRail() {
-  const rail = document.getElementById('fleet-rail');
-  const total = Object.keys(state.vessels).length;
-  const unassigned = Object.keys(state.vessels).filter(m => fleetsForVessel(m).length === 0).length;
-  const ff = state.fleetFilter;
-
-  let html = `
-    <div class="fv-rail-label">Filter</div>
-    <div class="fleet-rail-item ${ff === 'all' ? 'active' : ''}" onclick="setFleetFilter('all')">
-      <span class="fleet-rail-dot" style="background:var(--text)"></span>
-      <span class="fleet-rail-name">All vessels</span>
-      <span class="fleet-rail-count">${total}</span>
-    </div>
-    <div class="fleet-rail-item ${ff === 'unassigned' ? 'active' : ''}" onclick="setFleetFilter('unassigned')">
-      <span class="fleet-rail-dot" style="background:var(--muted)"></span>
-      <span class="fleet-rail-name">Unassigned</span>
-      <span class="fleet-rail-count">${unassigned}</span>
-    </div>
-    <div class="fv-rail-divider"></div>
-    <div class="fv-rail-label">Fleets</div>`;
-
-  if (state.fleets.length === 0) {
-    html += `<div class="arm-empty" style="padding:6px 10px">No fleets yet.</div>`;
-  } else {
-    state.fleets.forEach(f => {
-      const count = f.mmsis.filter(m => state.vessels[m]).length;
-      html += `
-        <div class="fleet-rail-item ${ff === f.id ? 'active' : ''}" onclick="setFleetFilter('${f.id}')">
-          <span class="fleet-rail-dot" style="background:${f.color}"></span>
-          <span class="fleet-rail-name">${escapeHtml(f.name)}</span>
-          <span class="fleet-rail-count">${count}</span>
-          <button class="fleet-rail-edit" title="Rename" onclick="event.stopPropagation();renameFleetPrompt('${f.id}')">&#9998;</button>
-          <button class="fleet-rail-edit del" title="Delete fleet" onclick="event.stopPropagation();deleteFleetConfirm('${f.id}')">&times;</button>
-        </div>`;
-    });
-  }
-
-  html += `<button id="fleet-new-btn" onclick="newFleetPrompt()">+ New fleet</button>`;
-  rail.innerHTML = html;
-}
-
-function renderFleetMain() {
-  const main = document.getElementById('fleet-main');
-  const ff = state.fleetFilter;
-
-  let title, accent = null;
-  if (ff === 'all') title = 'All vessels';
-  else if (ff === 'unassigned') title = 'Unassigned vessels';
-  else { const f = getFleet(ff); title = f ? f.name : 'Fleet'; accent = f ? f.color : null; }
-
-  const mmsis = vesselsInFilter(ff).sort((a, b) => {
-    const aHas = state.vessels[a].lat != null ? 0 : 1;
-    const bHas = state.vessels[b].lat != null ? 0 : 1;
-    if (aHas !== bHas) return aHas - bHas;
-    return (state.vessels[a].name || a).localeCompare(state.vessels[b].name || b);
-  });
-
-  document.getElementById('fleet-view-sub').textContent =
-    `${state.fleets.length} fleet${state.fleets.length !== 1 ? 's' : ''} · ${Object.keys(state.vessels).length} vessels`;
-
-  let cards;
-  if (mmsis.length === 0) {
-    cards = `<div class="fv-empty">${ff === 'all'
-      ? 'No vessels tracked yet. Add some from the tracker.'
-      : (ff === 'unassigned' ? 'Every vessel belongs to a fleet.' : 'No vessels in this fleet yet — use the Armatore button to add some.')}</div>`;
-  } else {
-    cards = mmsis.map(mmsi => fleetVesselCardHTML(mmsi)).join('');
-  }
-
-  main.innerHTML = `
-    <div class="fv-main-head">
-      <div class="fv-main-title" ${accent ? `style="color:${accent}"` : ''}>${escapeHtml(title)}</div>
-      <div class="fv-main-sub">${mmsis.length} vessel${mmsis.length !== 1 ? 's' : ''}</div>
-    </div>
-    <div class="fv-grid">${cards}</div>`;
-}
-
-function fleetVesselCardHTML(mmsi) {
-  const v = state.vessels[mmsi];
-  const isMoving = v.sog != null && v.sog > 0.5;
-  const hasData = v.lat != null;
-  const dotClass = !hasData ? 'moored' : (isMoving ? 'moving'
-    : (v.nav_status && v.nav_status.toLowerCase().includes('anchor') ? 'anchored' : 'moored'));
-
-  const vFleets = fleetsForVessel(mmsi);
-  const accent = vFleets.length ? vFleets[0].color : null;
-
-  const sub = [v.mmsi, v.flag, v.ship_type_name].filter(Boolean).map(escapeHtml).join(' · ');
-
-  const dash = '<span style="color:var(--muted)">—</span>';
-  const speed = v.sog != null ? v.sog.toFixed(1) + ' kn' : dash;
-  const course = v.cog != null ? `${v.cog.toFixed(0)}° ${cogToCompass(v.cog)}` : dash;
-  const dest = v.destination ? escapeHtml(v.destination) : dash;
-  const eta = v.eta ? escapeHtml(v.eta.replace('T', ' ')) : dash;
-  const size = (v.length && v.width) ? `${v.length} × ${v.width} m` : dash;
-  const seen = v.last_position_update ? escapeHtml(timeAgo(v.last_position_update)) : 'waiting…';
-
-  const chips = vFleets.length
-    ? `<div class="fv-card-fleets">${vFleets.map(f =>
-        `<span class="fv-card-fleet-chip" style="color:${f.color};border-color:${f.color}55;background:${f.color}14">${escapeHtml(f.name)}</span>`
-      ).join('')}</div>`
-    : '';
-
-  return `
-    <div class="fv-card" style="--fv-accent:${accent || 'var(--border2)'}">
-      <div class="fv-card-head">
-        <div class="fv-card-name-block">
-          <div class="fv-card-name">
-            <span class="fv-status-dot ${dotClass}"></span>
-            ${escapeHtml(v.name || v.mmsi)}
-          </div>
-          <div class="fv-card-sub">${sub}</div>
-        </div>
-        <button class="fv-armatore-btn" onclick="event.stopPropagation();openArmatoreMenu('${mmsi}', this)" title="Assign to fleet">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1v14M3 4h5.5a2 2 0 0 1 0 4H3M3 4v8"/><circle cx="8" cy="12.5" r="1.6"/></svg>
-          Armatore
-        </button>
-      </div>
-      <div class="fv-detail-grid">
-        <div class="fv-detail"><span class="fv-detail-k">Speed</span><span class="fv-detail-v">${speed}</span></div>
-        <div class="fv-detail"><span class="fv-detail-k">Course</span><span class="fv-detail-v">${course}</span></div>
-        <div class="fv-detail"><span class="fv-detail-k">Destination</span><span class="fv-detail-v">${dest}</span></div>
-        <div class="fv-detail"><span class="fv-detail-k">ETA</span><span class="fv-detail-v">${eta}</span></div>
-        <div class="fv-detail"><span class="fv-detail-k">Size</span><span class="fv-detail-v">${size}</span></div>
-        <div class="fv-detail"><span class="fv-detail-k">Last seen</span><span class="fv-detail-v">${seen}</span></div>
-      </div>
-      ${chips}
-    </div>`;
-}
-
-// ── Armatore assign popover ──
-function openArmatoreMenu(mmsi, btn) {
-  state._armMmsi = String(mmsi);
-  state._armBtn = btn;
-  renderArmatoreMenu();
-  const menu = document.getElementById('armatore-menu');
-  menu.classList.remove('hidden');
-  positionArmatoreMenu(btn);
-}
-
-function renderArmatoreMenu() {
-  const mmsi = state._armMmsi;
-  const menu = document.getElementById('armatore-menu');
-  let html = `<div class="arm-title">Assign to fleet</div>`;
-
-  if (state.fleets.length === 0) {
-    html += `<div class="arm-empty">No fleets yet — create one below.</div>`;
-  } else {
-    state.fleets.forEach(f => {
-      const on = f.mmsis.includes(mmsi);
-      html += `
-        <div class="arm-item ${on ? 'on' : ''}" onclick="armToggle('${f.id}')">
-          <span class="arm-check">${on ? '&#10003;' : ''}</span>
-          <span class="arm-dot" style="background:${f.color}"></span>
-          <span class="arm-name">${escapeHtml(f.name)}</span>
-        </div>`;
-    });
-  }
-
-  html += `
-    <div class="arm-divider"></div>
-    <div class="arm-item arm-new" onclick="armNewFleet()">+ New fleet…</div>`;
-  menu.innerHTML = html;
-}
-
-function armToggle(fleetId) {
-  toggleVesselFleet(state._armMmsi, fleetId);
-  renderArmatoreMenu();
-  refreshFleetUI();
-  if (state._armBtn && document.body.contains(state._armBtn)) positionArmatoreMenu(state._armBtn);
-}
-
-function armNewFleet() {
-  const mmsi = state._armMmsi;
-  openFleetNameModal('New Fleet', '', name => {
-    const fleet = createFleet(name);
-    toggleVesselFleet(mmsi, fleet.id);
-    refreshFleetUI();
-    renderArmatoreMenu();
-  });
-}
-
-function positionArmatoreMenu(btn) {
-  const menu = document.getElementById('armatore-menu');
-  const r = btn.getBoundingClientRect();
-  const mw = menu.offsetWidth, mh = menu.offsetHeight;
-  let left = r.right - mw;
-  let top = r.bottom + 6;
-  if (left < 8) left = 8;
-  if (left + mw > window.innerWidth - 8) left = window.innerWidth - 8 - mw;
-  if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 6);
-  menu.style.left = left + 'px';
-  menu.style.top = top + 'px';
-}
-
-function closeArmatoreMenu() {
-  document.getElementById('armatore-menu').classList.add('hidden');
-  state._armMmsi = null;
-  state._armBtn = null;
-}
-
-// ── Fleet name modal (create / rename) ──
-let _fleetNameCb = null;
-
-function openFleetNameModal(title, initial, onSave) {
-  _fleetNameCb = onSave;
-  document.getElementById('fleet-name-title').textContent = title;
-  const input = document.getElementById('fleet-name-input');
-  input.value = initial || '';
-  document.getElementById('fleet-name-error').style.display = 'none';
-  document.getElementById('fleet-name-overlay').classList.remove('hidden');
-  setTimeout(() => { input.focus(); input.select(); }, 60);
-}
-
-function closeFleetNameModal() {
-  document.getElementById('fleet-name-overlay').classList.add('hidden');
-  _fleetNameCb = null;
-}
-
-function submitFleetName() {
-  const input = document.getElementById('fleet-name-input');
-  const name = input.value.trim();
-  if (!name) {
-    document.getElementById('fleet-name-error').style.display = 'block';
-    return;
-  }
-  const cb = _fleetNameCb;
-  closeFleetNameModal();
-  if (cb) cb(name);
-}
-
-function newFleetPrompt() {
-  openFleetNameModal('New Fleet', '', name => {
-    const fleet = createFleet(name);
-    state.fleetFilter = fleet.id;
-    refreshFleetUI();
-  });
-}
-
-function renameFleetPrompt(id) {
-  const f = getFleet(id);
-  if (!f) return;
-  openFleetNameModal('Rename Fleet', f.name, name => renameFleet(id, name));
-}
-
-function deleteFleetConfirm(id) {
-  const f = getFleet(id);
-  if (!f) return;
-  if (confirm(`Delete fleet "${f.name}"?\n\nThe vessels stay tracked — they're just removed from this fleet.`)) {
-    deleteFleet(id);
-  }
-}
-
-// ══════════════════════════════════════════════
 //  BACKEND URL MANAGEMENT
 // ══════════════════════════════════════════════
 function saveBackendUrl() {
@@ -2048,8 +1362,161 @@ function startPolling() {
   if (state.pollTimer) clearInterval(state.pollTimer);
   setConnStatus('connecting');
   pollVessels();
-  fetchFleets();
   state.pollTimer = setInterval(pollVessels, CONFIG.pollInterval);
+}
+
+// ══════════════════════════════════════════════
+//  PLAYBACK MODE
+// ══════════════════════════════════════════════
+async function enterPlayback(mmsi) {
+  const v = state.vessels[mmsi];
+  if (!v) return;
+
+  // Close popup
+  if (v.marker && v.marker.isPopupOpen()) v.marker.closePopup();
+
+  // Fetch full history (up to 7 days)
+  let trail;
+  try {
+    trail = await apiFetch(`/api/vessel/${mmsi}/trail?hours=168`);
+  } catch (e) {
+    console.warn('[Playback] Failed to load trail:', e.message);
+    return;
+  }
+
+  if (!trail || trail.length < 2) {
+    alert('Not enough history data for this vessel yet.');
+    return;
+  }
+
+  // Hide all vessels
+  Object.values(state.vessels).forEach(vessel => {
+    if (vessel.marker) vessel.marker.setOpacity(0);
+    if (vessel.trailPolyline) vessel.trailPolyline.setStyle({ opacity: 0 });
+  });
+
+  // Create playback state
+  state.playback = {
+    mmsi,
+    trail,
+    index: trail.length - 1,
+    fullLine: null,
+    traveledLine: null,
+    ghostMarker: null,
+  };
+
+  const pb = state.playback;
+
+  // Draw full trail (dim)
+  const allCoords = trail.map(p => [p.lat, p.lng]);
+  pb.fullLine = L.polyline(allCoords, {
+    color: '#00d4aa',
+    weight: 2,
+    opacity: 0.15,
+    dashArray: '6 4',
+  }).addTo(state.map);
+
+  // Draw traveled portion (bright)
+  pb.traveledLine = L.polyline(allCoords, {
+    color: '#00d4aa',
+    weight: 2.5,
+    opacity: 0.7,
+  }).addTo(state.map);
+
+  // Create ghost marker at current position
+  const lastPt = trail[trail.length - 1];
+  const icon = makeVesselIcon(lastPt.cog, true, true);
+  pb.ghostMarker = L.marker([lastPt.lat, lastPt.lng], { icon, zIndexOffset: 2000 })
+    .addTo(state.map);
+
+  // Fit map to trail
+  state.map.fitBounds(pb.fullLine.getBounds().pad(0.1));
+
+  // Set up slider
+  const slider = document.getElementById('playback-slider');
+  slider.min = 0;
+  slider.max = trail.length - 1;
+  slider.value = trail.length - 1;
+
+  // Set bar info
+  document.getElementById('playback-name').textContent = v.name || mmsi;
+  document.getElementById('playback-time-start').textContent = formatShort(trail[0].timestamp);
+  document.getElementById('playback-time-end').textContent = formatShort(trail[trail.length - 1].timestamp);
+
+  // Show bar and hide sidebar on mobile
+  document.getElementById('playback-bar').classList.add('active');
+  if (window.innerWidth <= 640) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('visible');
+    document.getElementById('sidebar-toggle').innerHTML = '&#9776;';
+    document.getElementById('sidebar-toggle').style.left = '12px';
+  }
+
+  onPlaybackSlide(trail.length - 1);
+}
+
+function onPlaybackSlide(idx) {
+  const pb = state.playback;
+  if (!pb) return;
+
+  idx = parseInt(idx);
+  pb.index = idx;
+  const pt = pb.trail[idx];
+
+  // Move marker
+  pb.ghostMarker.setLatLng([pt.lat, pt.lng]);
+  const isMoving = pt.sog != null && pt.sog > 0.5;
+  pb.ghostMarker.setIcon(makeVesselIcon(pt.cog, isMoving, true));
+
+  // Update traveled line (show only up to current index)
+  const traveledCoords = pb.trail.slice(0, idx + 1).map(p => [p.lat, p.lng]);
+  pb.traveledLine.setLatLngs(traveledCoords);
+
+  // Update info
+  document.getElementById('playback-timestamp').textContent = formatTimestamp(pt.timestamp);
+  document.getElementById('playback-speed').textContent = pt.sog != null ? pt.sog.toFixed(1) + ' kn' : '---';
+  document.getElementById('playback-course').textContent = pt.cog != null ? cogToCompass(pt.cog) + ' (' + pt.cog.toFixed(0) + '°)' : '---';
+  document.getElementById('playback-status').textContent = pt.nav_status || '';
+}
+
+function exitPlayback() {
+  const pb = state.playback;
+  if (!pb) return;
+
+  // Clean up playback layers
+  if (pb.fullLine) state.map.removeLayer(pb.fullLine);
+  if (pb.traveledLine) state.map.removeLayer(pb.traveledLine);
+  if (pb.ghostMarker) state.map.removeLayer(pb.ghostMarker);
+
+  state.playback = null;
+
+  // Restore all vessels
+  Object.keys(state.vessels).forEach(mmsi => {
+    const v = state.vessels[mmsi];
+    if (v.marker) v.marker.setOpacity(1);
+    if (v.trailPolyline) v.trailPolyline.setStyle({ opacity: 0.4 });
+  });
+
+  // Hide bar
+  document.getElementById('playback-bar').classList.remove('active');
+
+  // Fit map to all vessels
+  const withPos = Object.values(state.vessels).filter(v => v.lat != null);
+  if (withPos.length === 1) {
+    state.map.setView([withPos[0].lat, withPos[0].lng], 10, { animate: true });
+  } else if (withPos.length > 1) {
+    const bounds = L.latLngBounds(withPos.map(v => [v.lat, v.lng]));
+    state.map.fitBounds(bounds.pad(0.15), { animate: true });
+  }
+}
+
+function formatShort(ts) {
+  const d = new Date(ts);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${dd}/${mm} ${hh}:${min}`;
 }
 
 // ══════════════════════════════════════════════
@@ -2069,7 +1536,6 @@ setInterval(() => {
 // ══════════════════════════════════════════════
 initMap();
 loadCache();
-loadFleetsCache();
 renderSidebar();
 
 Object.keys(state.vessels).forEach(mmsi => updateVesselOnMap(mmsi));
@@ -2095,37 +1561,6 @@ document.getElementById('mmsi-input').addEventListener('keydown', e => {
 
 document.getElementById('backend-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') saveBackendUrl();
-});
-
-// ── Fleet UI listeners ──
-document.getElementById('fleet-name-save').addEventListener('click', submitFleetName);
-document.getElementById('fleet-name-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') submitFleetName();
-});
-
-// Close the Armatore popover when clicking outside it
-document.addEventListener('click', e => {
-  const menu = document.getElementById('armatore-menu');
-  if (!menu.classList.contains('hidden') && !menu.contains(e.target)) closeArmatoreMenu();
-});
-// Reposition popover on scroll/resize so it stays anchored to its button
-window.addEventListener('resize', () => {
-  const menu = document.getElementById('armatore-menu');
-  if (!menu.classList.contains('hidden') && state._armBtn) positionArmatoreMenu(state._armBtn);
-});
-document.getElementById('fleet-main').addEventListener('scroll', () => {
-  const menu = document.getElementById('armatore-menu');
-  if (!menu.classList.contains('hidden') && state._armBtn) positionArmatoreMenu(state._armBtn);
-});
-
-// Escape closes (in priority order): popover → name modal → fleet view
-document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape') return;
-  const menu = document.getElementById('armatore-menu');
-  const nameModal = document.getElementById('fleet-name-overlay');
-  if (!menu.classList.contains('hidden')) { closeArmatoreMenu(); return; }
-  if (!nameModal.classList.contains('hidden')) { closeFleetNameModal(); return; }
-  if (state.fleetViewOpen) closeFleetView();
 });
 </script>
 </body>
