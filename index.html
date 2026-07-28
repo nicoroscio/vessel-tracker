@@ -1273,6 +1273,7 @@ async function pollVessels() {
     renderSidebar();
     if (state.fleetViewOpen) renderFleetView();
     saveCache();
+    maybeRefreshTrails();
   } catch (e) {
     console.warn('[Poll] Failed:', e.message);
     setConnStatus('error');
@@ -1290,6 +1291,21 @@ async function fetchTrail(mmsi) {
     }
   } catch (e) {
     console.warn('[Trail] Failed for', mmsi, e.message);
+  }
+}
+
+let _lastTrailFetch = 0;
+const TRAIL_INTERVAL = 120000;
+
+async function fetchAllTrails() {
+  const mmsis = Object.keys(state.vessels).filter(m => state.vessels[m].lat != null);
+  await Promise.allSettled(mmsis.map(m => fetchTrail(m)));
+  _lastTrailFetch = Date.now();
+}
+
+async function maybeRefreshTrails() {
+  if (Date.now() - _lastTrailFetch > TRAIL_INTERVAL) {
+    await fetchAllTrails();
   }
 }
 
