@@ -869,7 +869,7 @@ function buildPopupHTML(v) {
     <div class="popup-grid">${rows}</div>
     ${voyageRows ? `<div class="popup-grid popup-section">${voyageRows}</div>` : ''}
     <span class="popup-badge ${badgeClass}">${statusLabel}</span>
-    ${!state.playback ? `<button class="popup-history-btn" onclick="enterPlayback('${v.mmsi}')">View History</button>` : ''}
+    ${!state.playback ? `<button class="popup-history-btn" data-playback-mmsi="${v.mmsi}">View History</button>` : ''}
   </div>`;
 }
 
@@ -1561,6 +1561,14 @@ document.getElementById('mmsi-input').addEventListener('keydown', e => {
 
 document.getElementById('backend-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') saveBackendUrl();
+});
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-playback-mmsi]');
+  if (btn) {
+    e.stopPropagation();
+    enterPlayback(btn.dataset.playbackMmsi);
+  }
 });
 </script>
 </body>
