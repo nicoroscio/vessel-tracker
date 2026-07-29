@@ -145,6 +145,22 @@
 
   #conn-label { color: var(--muted); }
 
+  #conn-count {
+    margin-left: auto;
+    display: none;
+    align-items: center;
+    gap: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  #conn-count.visible { display: inline-flex; }
+  #conn-count b { font-weight: 600; }
+  #conn-count.partial { color: var(--amber); }
+  #conn-count.complete { color: var(--accent); }
+
   /* ── Vessel list ── */
   #vessel-list { flex: 1; overflow-y: auto; padding: 6px 0; }
 
@@ -1017,6 +1033,7 @@
     <div id="conn-bar">
       <div id="conn-dot"></div>
       <span id="conn-label">Connecting...</span>
+      <span id="conn-count" title="Vessels with live position data / total vessels tracked"></span>
     </div>
 
     <div id="vessel-list"></div>
@@ -1276,6 +1293,16 @@ function renderSidebar() {
     return aHas - bHas;
   });
   document.getElementById('vessel-count').textContent = `${mmsis.length} vessel${mmsis.length !== 1 ? 's' : ''} tracked`;
+
+  const foundCount = mmsis.reduce((n, m) => n + (state.vessels[m].lat != null ? 1 : 0), 0);
+  const countEl = document.getElementById('conn-count');
+  if (mmsis.length === 0) {
+    countEl.className = '';
+    countEl.textContent = '';
+  } else {
+    countEl.className = 'visible ' + (foundCount === mmsis.length ? 'complete' : 'partial');
+    countEl.innerHTML = `<b>${foundCount}</b>/${mmsis.length} found`;
+  }
 
   list.innerHTML = '';
   mmsis.forEach(mmsi => {
