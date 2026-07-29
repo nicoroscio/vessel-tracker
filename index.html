@@ -758,6 +758,14 @@ function initMap() {
     opacity: 1,
   });
 
+  state.map.on('click', () => {
+    if (state.activeMMSI) {
+      state.activeMMSI = null;
+      Object.keys(state.vessels).forEach(m => updateVesselOnMap(m));
+      renderSidebar();
+    }
+  });
+
   darkBase.addTo(state.map);
   seaMap.addTo(state.map);
 }
